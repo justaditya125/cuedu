@@ -28,9 +28,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'ignore' }));
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use('/programme-detail', express.static(path.join(__dirname, 'programme-detail')));
+app.use(express.static(path.join(__dirname, '../frontend/public'), { dotfiles: 'ignore' }));
+app.use('/assets', express.static(path.join(__dirname, '../frontend/assets')));
+app.use('/programme-detail', express.static(path.join(__dirname, '../frontend/programme-detail')));
 
 async function postToCRM(payload) {
   const controller = new AbortController();
@@ -391,7 +391,7 @@ app.get('/health', (req, res) => {
 app.use((req, res) => {
   logger.warn('Not found', { path: req.path, method: req.method });
   if (req.accepts('html')) {
-    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+    res.status(404).sendFile(path.join(__dirname, '../frontend/public', '404.html'));
   } else {
     res.status(404).json({ success: false, message: 'Endpoint not found' });
   }

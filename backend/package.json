@@ -1,11 +1,11 @@
 {
-  "name": "cuedu-website",
+  "name": "cuedu-backend",
   "version": "1.0.0",
-  "description": "Centurion University Online static site with backend",
-  "main": "backend/server.js",
+  "description": "Centurion University Online Backend API & Webhook Service",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "node backend/server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "compression": "^1.7.4",
