@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const logger = require('./config/logger');
@@ -25,7 +26,12 @@ app.use(cors({
   maxAge: 86400
 }));
 
-app.use(express.json({ limit: '10mb' }));
+// Keep the raw body: Razorpay's signature is an HMAC over the exact bytes sent,
+// so it cannot be recomputed from the re-serialised JSON.
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => { req.rawBody = buf; }
+}));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(express.static(path.join(__dirname, '../frontend/public'), { dotfiles: 'ignore' }));
@@ -411,9 +417,43 @@ app.post('/api/confirm-payment',
   }
 );
 
+// Verifies Razorpay's X-Razorpay-Signature: HMAC-SHA256 of the raw request
+// body, keyed with the webhook secret. Returns { skipped: true } when no secret
+// is configured, so enabling verification is a deployment step, not a code change.
+function verifyRazorpaySignature(req) {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!secret) return { ok: true, skipped: true };
+
+  const signature = req.get('X-Razorpay-Signature') || '';
+  if (!signature || !req.rawBody || !req.rawBody.length) {
+    return { ok: false, reason: 'missing signature or body' };
+  }
+
+  const expected = crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex');
+  const expectedBuf = Buffer.from(expected, 'utf8');
+  const actualBuf = Buffer.from(signature, 'utf8');
+  if (expectedBuf.length !== actualBuf.length || !crypto.timingSafeEqual(expectedBuf, actualBuf)) {
+    return { ok: false, reason: 'signature mismatch' };
+  }
+  return { ok: true };
+}
+
 app.all('/api/razorpay-webhook', async (req, res) => {
   const body = req.body || {};
   const query = req.query || {};
+
+  // Only POSTs come from Razorpay and carry a signature; the GET leg is the
+  // browser being redirected back and cannot be signed.
+  if (req.method === 'POST') {
+    const check = verifyRazorpaySignature(req);
+    if (!check.ok) {
+      logger.warn('Rejected Razorpay webhook', { reason: check.reason, ip: req.ip });
+      return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+    }
+    if (check.skipped) {
+      logger.warn('RAZORPAY_WEBHOOK_SECRET is not set - webhook accepted WITHOUT verification');
+    }
+  }
 
   const entity = (body.payload && body.payload.payment && body.payload.payment.entity) ? body.payload.payment.entity : {};
   
@@ -428,9 +468,23 @@ app.all('/api/razorpay-webhook', async (req, res) => {
   let rawAmount = entity.amount ? (entity.amount / 100) : (body.amount || query.amount || 1000);
   const amount = (rawAmount && parseFloat(rawAmount) > 0) ? parseFloat(rawAmount) : 1000;
 
+  // Trust the payment's real state rather than assuming success. Only
+  // "captured" means the money was actually taken; the GET redirect carries no
+  // entity, so it keeps the previous optimistic default.
+  const entityStatus = String(entity.status || '').toLowerCase();
+  const isCaptured = !entityStatus || entityStatus === 'captured' || entityStatus === 'paid';
   const status = 'Paid';
 
-  logger.info('Razorpay Callback/Webhook received', { mobile, email, paymentId, amount, method: req.method });
+  logger.info('Razorpay Callback/Webhook received', {
+    mobile, email, paymentId, amount, method: req.method, event: body.event, entityStatus
+  });
+
+  // Never write a non-captured payment to the CRM: a later failed attempt would
+  // otherwise overwrite an earlier successful one.
+  if (!isCaptured) {
+    logger.warn('Ignoring non-captured Razorpay payment', { paymentId, entityStatus, event: body.event });
+    return res.json({ success: true, ignored: true, reason: `payment status is ${entityStatus}`, paymentId });
+  }
 
   if ((mobile || email) && paymentId) {
     try {
