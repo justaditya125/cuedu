@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Admission Fee | Centurion University</title>
+  <meta name="description" content="Pay your admission fee online at Centurion University. Retrieve your registered details and proceed to secure payment.">
+  <meta name="theme-color" content="#82C8DE">
+  <meta property="og:title" content="Pay Admission Fee | Centurion University">
+  <meta property="og:description" content="Retrieve your registered details and pay your admission fee online.">
+  <meta property="og:image" content="/assets/img/logo.png">
+  <meta property="og:url" content="https://cuedu.cutm.ac.in/payment.html">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/img/logo.png" type="image/png">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .payment-page{min-height:60vh;padding:60px 20px}
+    .payment-card{max-width:640px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);padding:40px;text-align:center}
+    .payment-card h2{color:#1A3A5C;margin:0 0 8px;font-size:1.8rem}
+    .payment-card p.subtitle{color:#64748b;font-size:0.98rem;margin-bottom:25px}
+    .lookup-form{display:flex;flex-direction:column;gap:14px;max-width:420px;margin:0 auto 10px}
+    .lookup-form input{padding:13px 16px;border:1px solid #d3d3d3;border-radius:8px;font-size:0.98rem;color:#333;background-color:#f9f9f9;transition:border-color 0.2s, background-color 0.2s;box-sizing:border-box}
+    .lookup-form input:focus{border-color:#102a43;background-color:#fff;box-shadow:0 0 0 3px rgba(16,42,67,0.1);outline:none}
+    .lookup-form .btn-retrieve{background:linear-gradient(135deg, #1A3A5C 0%, #2c5d8a 100%);color:#fff;padding:13px 30px;border:none;border-radius:50px;font-weight:700;font-size:1rem;box-shadow:0 4px 14px rgba(16,42,67,0.25);transition:all 0.3s ease;cursor:pointer}
+    .lookup-form .btn-retrieve:hover{background:linear-gradient(135deg, #2c5d8a 0%, #1A3A5C 100%);transform:translateY(-2px)}
+    .lookup-form .btn-retrieve:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+    .divider{display:flex;align-items:center;gap:12px;color:#94a3b8;font-size:0.85rem;max-width:420px;margin:8px auto}
+    .divider::before,.divider::after{content:"";flex:1;height:1px;background:#e2e8f0}
+    .lookup-msg{font-size:0.9rem;margin-top:10px}
+    .lookup-msg.error{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;padding:14px;border-radius:8px;margin-top:15px}
+    .lookup-msg.loading{color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:14px;border-radius:8px;margin-top:15px}
+    .lookup-msg.success{background:#e8f8ef;color:#15803d;border:1px solid #bbf7d0;padding:18px;border-radius:12px;font-size:1.05rem;font-weight:700;margin-top:20px;line-height:1.6;box-shadow:0 4px 14px rgba(34,197,94,0.15)}
+    .student-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:left;margin:20px auto 0;max-width:480px}
+    .student-card h3{color:#1A3A5C;font-size:1.05rem;margin:0 0 12px;border-bottom:2px solid #D4A547;padding-bottom:8px}
+    .detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef2f7;font-size:0.95rem}
+    .detail-row:last-child{border-bottom:none}
+    .detail-row .label{color:#64748b;font-weight:600}
+    .detail-row .value{color:#1A3A5C;font-weight:700;text-align:right;word-break:break-word}
+    .amount-box{margin:20px auto 0;max-width:480px}
+    .amount-box .amount-label{font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:#64748b}
+    .amount-box .amount-value{font-size:2rem;font-weight:800;color:#1A3A5C}
+    .pay-actions{margin-top:22px}
+    .pay-actions .btn-pay{display:inline-block;background:linear-gradient(135deg, #f26522 0%, #d94f18 100%);color:#fff;padding:14px 40px;border-radius:50px;font-weight:700;font-size:1.05rem;box-shadow:0 6px 18px rgba(242,101,34,0.35);transition:all 0.3s ease;cursor:pointer;border:none}
+    .pay-actions .btn-pay:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(242,101,34,0.45)}
+    .pay-note{font-size:0.82rem;color:#94a3b8;margin-top:10px}
+    .back-link{display:inline-block;margin-top:18px;color:#C41E3A;font-size:0.9rem}
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+
+<div class="top-banner">
+  Admissions open for Aug'26 session. Avail a 10% early-bird scholarship!
+  <button class="top-banner-close">&times;</button>
+</div>
+
+<header class="header">
+  <div class="header-top-row">
+    <div class="header-inner">
+      <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
+      <div class="header-center-text">Centurion University Online</div>
+      <div class="header-right-actions">
+        <a href="admissionportal.html" class="apply-btn">Apply Now</a>
+        <a href="payment.html" class="pay-btn">Pay Now</a>
+        <button class="hamburger">&#9776;</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav-row">
+    <div class="header-inner">
+      <ul class="nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about-us.html">About Us</a></li>
+        <li><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
+        <li><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="myaccount.html">Myaccount</a></div></li>
+        <li><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
+        <li><a href="recognition.html">Recognition</a></li>
+        <li><a href="contact-us.html">Contact Us</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="page-header">
+    <div class="container">
+      <h1>Pay Admission Fee</h1>
+      <p>Retrieve your registered details and pay securely online</p>
+    </div>
+  </section>
+
+  <section class="payment-page">
+    <div class="payment-card">
+      <h2>Payment</h2>
+      <p class="subtitle">Enter your registered email address or mobile number to retrieve your details.</p>
+
+      <form class="lookup-form" id="lookupForm">
+        <input type="email" id="email" placeholder="Registered Email Address" autocomplete="email">
+        <div class="divider">or</div>
+        <input type="tel" id="mobile" placeholder="Registered Mobile Number (10 digits)" maxlength="10" autocomplete="tel">
+        <button type="submit" class="btn-retrieve" id="retrieveBtn">Retrieve</button>
+      </form>
+
+      <p class="lookup-msg hidden" id="lookupMsg"></p>
+
+      <div id="resultArea" class="hidden">
+        <div class="student-card">
+          <h3>Registered Details</h3>
+          <div id="detailsList"></div>
+        </div>
+
+        <div class="amount-box">
+          <div class="amount-label">Amount to Pay</div>
+          <div class="amount-value" id="amountValue">&#8377; 1,000</div>
+        </div>
+
+        <div class="pay-actions">
+          <button type="button" class="btn-pay" id="payBtn">Proceed to Pay &#8377; 1,000</button>
+          <p class="pay-note">You will be redirected to our secure payment gateway to complete the payment.</p>
+        </div>
+      </div>
+
+      <a href="index.html" class="back-link">&larr; Back to Home</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col"><h4>About Us</h4><a href="recognition.html">Recognition</a><a href="about-us.html">About Centurion</a></div>
+    <div class="footer-col"><h4>Programmes</h4><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div>
+    <div class="footer-col"><h4>Student Corner</h4><a href="https://eclasses.cuedu.in/users/login" target="_blank">LMS</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf">Examination Guidelines</a><a href="online-conduction.html">Course Conduction</a><a href="mandatory-disclosure.html">Mandatory disclosure</a><a href="assessment.html">Assessment</a><a href="myaccount.html">Myaccount</a></div>
+    <div class="footer-col"><h4>Admissions</h4><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a><a href="assets/pdf/Centurion-Cancellation-Request-Form.pdf">Centurion Cancellation Request Form</a><a href="assets/pdf/Centurion-Early-Salary-Cancellation-Form.pdf">Centurion Early Salary Cancellation Form</a><a href="assets/pdf/Centurion_Propelled_cancellation_form.pdf">Centurion Propelled Cancellation Form</a></div>
+    <div class="footer-col"><h4>Contact Us</h4><p>CALL : <a href="tel:+917846850060">+91-7846850060</a></p><p><strong>Admission:</strong> admission.online@cutm.ac.in</p><div class="social-icons"><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="Instagram">&#9650;</a><a href="#" aria-label="Google">G</a></div></div>
+  </div>
+  <div class="footer-bottom">&copy; Copyright 2026 of Centurion University | All Rights Reserved <a href="privacy-policy.html" >Privacy Policy</a></div>
+</footer>
+
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/payment.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Submitted | Centurion University</title>
+  <meta name="description" content="Centurion University - Your registration has been submitted successfully.">
+  <meta name="theme-color" content="#82C8DE">
+  <meta property="og:title" content="Registration Submitted | Centurion University">
+  <meta property="og:description" content="Your registration has been submitted successfully.">
+  <meta property="og:image" content="/assets/img/logo.png">
+  <meta property="og:url" content="https://cuedu.cutm.ac.in/registration-success.html">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/img/logo.png" type="image/png">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .success-page{min-height:60vh;padding:60px 20px;display:flex;align-items:center;justify-content:center}
+    .success-card{max-width:680px;width:100%;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);padding:40px;text-align:center}
+    .success-icon{width:80px;height:80px;border-radius:50%;background:#e8f8ef;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:40px;color:#2ecc71}
+    .success-card h2{color:#1A3A5C;margin:0 0 8px;font-size:1.8rem}
+    .success-message{color:#555;font-size:1.05rem;margin-bottom:30px;line-height:1.6}
+    .reg-id-card{background:linear-gradient(135deg,#1A3A5C,#2c5d8a);color:#fff;border-radius:12px;padding:24px;margin-bottom:30px}
+    .reg-id-card .reg-id-label{font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:#cfe3f5;margin-bottom:6px}
+    .reg-id-card .reg-id-value{font-size:2.2rem;font-weight:800;letter-spacing:2px;color:#fff}
+    .reg-id-card .reg-id-note{font-size:0.85rem;color:#d9e9f8;margin-top:8px}
+    .details-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;text-align:left;margin-bottom:30px}
+    .details-box h3{color:#1A3A5C;font-size:1.1rem;margin:0 0 15px;border-bottom:2px solid #D4A547;padding-bottom:8px}
+    .detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef2f7;font-size:0.95rem}
+    .detail-row:last-child{border-bottom:none}
+    .detail-row .label{color:#64748b;font-weight:600}
+    .detail-row .value{color:#1A3A5C;font-weight:700;text-align:right;word-break:break-word}
+    .success-card a.hero-cta{display:inline-block}
+    .error-note{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:20px;font-size:0.95rem}
+  </style>
+</head>
+<body>
+
+<div class="top-banner">
+  Admissions open for Aug'26 session. Avail a 10% early-bird scholarship!
+  <button class="top-banner-close">&times;</button>
+</div>
+
+<header class="header">
+  <div class="header-top-row">
+    <div class="header-inner">
+      <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
+      <div class="header-center-text">Centurion University Online</div>
+      <div class="header-right-actions">
+        <a href="admissionportal.html" class="apply-btn">Apply Now</a>
+        <a href="payment.html" class="pay-btn">Pay Now</a>
+        <button class="hamburger">&#9776;</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-nav-row">
+    <div class="header-inner">
+      <ul class="nav">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about-us.html">About Us</a></li>
+        <li><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
+        <li><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="myaccount.html">Myaccount</a></div></li>
+        <li><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
+        <li><a href="recognition.html">Recognition</a></li>
+        <li><a href="contact-us.html">Contact Us</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<section class="success-page">
+  <div class="success-card">
+    <div class="success-icon">&#10004;</div>
+    <h2>Registration Submitted</h2>
+    <p class="success-message" id="successMessage">Your registration has been submitted to our admissions team.</p>
+
+    <div class="error-note hidden" id="errorNote">No registration details found in this session. Please register using the Apply Now button.</div>
+
+    <div id="submittedDetails" class="hidden">
+      <div class="reg-id-card hidden" id="regIdCard">
+        <div class="reg-id-label">Your Registration ID</div>
+        <div class="reg-id-value" id="regIdValue">-</div>
+        <div class="reg-id-note">Please keep this ID for future correspondence.</div>
+      </div>
+      <div class="details-box">
+        <h3>Your Details</h3>
+        <div id="detailsList"></div>
+      </div>
+    </div>
+
+    <a href="index.html" class="hero-cta">Back to Home</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col"><h4>About Us</h4><a href="recognition.html">Recognition</a><a href="about-us.html">About Centurion</a></div>
+    <div class="footer-col"><h4>Programmes</h4><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div>
+    <div class="footer-col"><h4>Student Corner</h4><a href="https://eclasses.cuedu.in/users/login" target="_blank">LMS</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf">Examination Guidelines</a><a href="online-conduction.html">Course Conduction</a><a href="mandatory-disclosure.html">Mandatory disclosure</a><a href="assessment.html">Assessment</a><a href="myaccount.html">Myaccount</a></div>
+    <div class="footer-col"><h4>Admissions</h4><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a><a href="assets/pdf/Centurion-Cancellation-Request-Form.pdf">Centurion Cancellation Request Form</a><a href="assets/pdf/Centurion-Early-Salary-Cancellation-Form.pdf">Centurion Early Salary Cancellation Form</a><a href="assets/pdf/Centurion_Propelled_cancellation_form.pdf">Centurion Propelled Cancellation Form</a></div>
+    <div class="footer-col"><h4>Contact Us</h4><p>CALL : <a href="tel:+917846850060">+91-7846850060</a></p><p><strong>Admission:</strong> admission.online@cutm.ac.in</p><div class="social-icons"><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="Instagram">&#9650;</a><a href="#" aria-label="Google">G</a></div></div>
+  </div>
+  <div class="footer-bottom">&copy; Copyright 2026 of Centurion University | All Rights Reserved <a href="privacy-policy.html" >Privacy Policy</a></div>
+</footer>
+
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/registration-success.js"></script>
+</body>
+</html>

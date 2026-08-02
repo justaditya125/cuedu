@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://cuedu.cutm.ac.in/sitemap.xml
