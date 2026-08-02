@@ -230,18 +230,32 @@ app.post('/api/register',
       // the reference, which is what the payment page shows as the admission
       // number, so the student sees one consistent ID everywhere.
       const leadRef = lead.leadId || lead.id || '';
+
+      // A 2xx with no lead means the CRM accepted the request but stored
+      // nothing - the student is not registered and would not be found by the
+      // payment lookup. Never report that as success. Log the whole CRM body,
+      // since its message is the only clue as to why.
+      if (!leadRef) {
+        logger.error('CRM returned no lead for registration', {
+          email, phone, course, status: crmResponse.status, crm: crmData
+        });
+        return res.status(502).json({
+          success: false,
+          message: crmData.message
+            ? `Registration was not completed: ${crmData.message}`
+            : 'Your registration could not be completed. Please contact admissions on +91-7846850060.',
+          crm: crmData
+        });
+      }
+
       logger.info('Registration forwarded to CRM', { email, leadRef });
 
-      // The lead is already saved at this point. Email is strictly best-effort:
-      // a mail failure must never turn a successful registration into an error.
-      if (leadRef) {
-        try {
-          sendConfirmationEmail({ name, email, course, leadId: leadRef, phone });
-        } catch (mailErr) {
-          logger.error('Confirmation email could not be queued', { error: mailErr.message, leadRef });
-        }
-      } else {
-        logger.warn('CRM accepted the lead but returned no reference; skipping email', { email });
+      // The lead is saved by this point. Email is strictly best-effort: a mail
+      // failure must never turn a successful registration into an error.
+      try {
+        sendConfirmationEmail({ name, email, course, leadId: leadRef, phone });
+      } catch (mailErr) {
+        logger.error('Confirmation email could not be queued', { error: mailErr.message, leadRef });
       }
 
       res.json({
