@@ -68,9 +68,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const submitBtn = regForm.querySelector('button[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
       const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        // Strip spaces, dashes and a +91 prefix so common formats submit
+        // cleanly; the server normalises again as the authority.
+        phone: document.getElementById('phone').value.replace(/\D/g, '').slice(-10),
         qualification: document.getElementById('qualification').value,
         course: document.getElementById('program').value
       };
@@ -108,10 +110,10 @@ document.addEventListener('DOMContentLoaded', function() {
     contactForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const formData = {
-        name: this.querySelector('input[name="name"]').value,
-        email: this.querySelector('input[name="email"]').value,
-        phone: this.querySelector('input[name="phone"]').value,
-        message: this.querySelector('textarea[name="message"]').value
+        name: this.querySelector('input[name="name"]').value.trim(),
+        email: this.querySelector('input[name="email"]').value.trim(),
+        phone: this.querySelector('input[name="phone"]').value.replace(/\D/g, '').slice(-10),
+        message: this.querySelector('textarea[name="message"]').value.trim()
       };
       fetch('/api/contact', {
         method: 'POST',

@@ -27,7 +27,9 @@
     successMsg.textContent = crm.message || 'Your registration has been submitted to our admissions team.';
   }
 
-  var leadId = crm.lead && crm.lead.id;
+  // Prefer the CRM's human-facing reference (e.g. CULDAI26226266) over the
+  // numeric id, so this matches the admission number on the payment page.
+  var leadId = crm.lead && (crm.lead.leadId || crm.lead.id);
   if (leadId) {
     if (regIdCard) regIdCard.classList.remove('hidden');
     if (regIdValue) regIdValue.textContent = leadId;

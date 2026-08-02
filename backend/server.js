@@ -179,8 +179,13 @@ function sendConfirmationEmail({ name, email, course, leadId, phone }) {
 app.post('/api/register',
   [
     body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
-    body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-    body('phone').matches(/^\d{10}$/).withMessage('Valid 10-digit phone number required'),
+    // Lower-cased and trimmed only. normalizeEmail() would strip dots and
+    // +tags from Gmail addresses, storing an address the student never typed
+    // and breaking the payment page's lookup-by-email.
+    body('email').trim().isEmail().withMessage('Valid email required').customSanitizer(normalizeEmail),
+    // Accept what people actually type - "+91 98765 43210", "09876543210" -
+    // and reduce it to the last 10 digits before validating.
+    body('phone').customSanitizer(normalizeMobile).matches(/^\d{10}$/).withMessage('Valid 10-digit phone number required'),
     body('qualification').trim().isLength({ min: 2, max: 100 }).withMessage('Qualification required'),
     body('course').trim().isLength({ min: 2, max: 100 }).withMessage('Course required')
   ],
@@ -188,7 +193,13 @@ app.post('/api/register',
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       logger.warn('Registration validation failed', { errors: errors.array() });
-      return res.status(400).json({ success: false, message: 'Invalid input data', errors: errors.array() });
+      // Surface the specific problem - the form shows this message verbatim.
+      const firstError = errors.array()[0];
+      return res.status(400).json({
+        success: false,
+        message: (firstError && firstError.msg) || 'Invalid input data',
+        errors: errors.array()
+      });
     }
 
     const { name, email, phone, qualification, course } = req.body;
@@ -214,11 +225,23 @@ app.post('/api/register',
         return res.status(502).json({ success: false, message: 'Failed to submit to admissions. Please contact support.', crm: crmData });
       }
 
-      const leadId = crmData.lead && crmData.lead.id;
-      logger.info('Registration forwarded to CRM', { email, leadId });
+      const lead = crmData.lead || {};
+      // The CRM returns both a numeric id and a human-facing reference; prefer
+      // the reference, which is what the payment page shows as the admission
+      // number, so the student sees one consistent ID everywhere.
+      const leadRef = lead.leadId || lead.id || '';
+      logger.info('Registration forwarded to CRM', { email, leadRef });
 
-      if (leadId) {
-        sendConfirmationEmail({ name, email, course, leadId, phone });
+      // The lead is already saved at this point. Email is strictly best-effort:
+      // a mail failure must never turn a successful registration into an error.
+      if (leadRef) {
+        try {
+          sendConfirmationEmail({ name, email, course, leadId: leadRef, phone });
+        } catch (mailErr) {
+          logger.error('Confirmation email could not be queued', { error: mailErr.message, leadRef });
+        }
+      } else {
+        logger.warn('CRM accepted the lead but returned no reference; skipping email', { email });
       }
 
       res.json({
@@ -237,14 +260,19 @@ app.post('/api/register',
 app.post('/api/contact',
   [
     body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Name required'),
-    body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-    body('phone').matches(/^\d{10}$/).withMessage('Valid phone number required'),
+    body('email').trim().isEmail().withMessage('Valid email required').customSanitizer(normalizeEmail),
+    body('phone').customSanitizer(normalizeMobile).matches(/^\d{10}$/).withMessage('Valid phone number required'),
     body('message').trim().isLength({ min: 10, max: 1000 }).withMessage('Message must be 10-1000 characters')
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, message: 'Invalid input data' });
+      logger.warn('Contact validation failed', { errors: errors.array() });
+      const firstError = errors.array()[0];
+      return res.status(400).json({
+        success: false,
+        message: (firstError && firstError.msg) || 'Invalid input data'
+      });
     }
 
     const { name, email, phone, message } = req.body;
