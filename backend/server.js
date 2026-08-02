@@ -232,10 +232,23 @@ app.post('/api/register',
       const leadRef = lead.leadId || lead.id || '';
 
       // A 2xx with no lead means the CRM accepted the request but stored
-      // nothing - the student is not registered and would not be found by the
-      // payment lookup. Never report that as success. Log the whole CRM body,
-      // since its message is the only clue as to why.
+      // nothing, so the student is not newly registered. The common cause is
+      // the CRM recognising an existing enquiry and replying { duplicate: true }.
       if (!leadRef) {
+        const isDuplicate = crmData.duplicate === true || /already/i.test(crmData.message || '');
+
+        if (isDuplicate) {
+          logger.warn('CRM reported a duplicate registration', { email, phone, course, crm: crmData });
+          return res.status(409).json({
+            success: false,
+            duplicate: true,
+            message: crmData.message || 'You have already registered with these details. Our admissions team will contact you shortly.',
+            crm: crmData
+          });
+        }
+
+        // Anything else is unexpected - log the whole body, since the CRM's
+        // message is the only clue as to why nothing was stored.
         logger.error('CRM returned no lead for registration', {
           email, phone, course, status: crmResponse.status, crm: crmData
         });

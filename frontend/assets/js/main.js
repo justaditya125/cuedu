@@ -89,6 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
             submitted: data.submitted
           }));
           window.location.href = 'registration-success.html';
+        } else if (data.duplicate) {
+          // Already on file at the CRM - not an error the student can act on.
+          submitting = false;
+          if (submitBtn) submitBtn.disabled = false;
+          alert(data.message);
         } else {
           submitting = false;
           if (submitBtn) submitBtn.disabled = false;
