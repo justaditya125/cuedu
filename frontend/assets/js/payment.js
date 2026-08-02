@@ -1,6 +1,7 @@
 (function() {
   var PAYMENT_URL = 'https://pages.razorpay.com/pl_TDMcoOPMLuKJ9W/view';
   var AMOUNT = '1000';
+  var STUDENT_KEY = 'cuedu_payment_student';
 
   var form = document.getElementById('lookupForm');
   var emailInput = document.getElementById('email');
@@ -14,8 +15,33 @@
 
   if (!form) return;
 
+  function formatAmount(value) {
+    var n = Number(value);
+    if (!isFinite(n) || n <= 0) return '';
+    return '\u20B9 ' + n.toLocaleString('en-IN');
+  }
+
   function formattedAmount() {
-    return '\u20B9 ' + Number(AMOUNT).toLocaleString('en-IN');
+    return formatAmount(AMOUNT);
+  }
+
+  // Remember who was looked up, so the payment gateway return trip can still
+  // identify the student when it does not echo the email/mobile back to us.
+  function rememberStudent(student) {
+    try {
+      sessionStorage.setItem(STUDENT_KEY, JSON.stringify({
+        email: student.email || '',
+        phone: student.phone || ''
+      }));
+    } catch (e) { /* storage unavailable - fall back to URL params only */ }
+  }
+
+  function recallStudent() {
+    try {
+      return JSON.parse(sessionStorage.getItem(STUDENT_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
   }
 
   function showMsg(text, type, isHtml) {
@@ -126,6 +152,7 @@
         }
 
         hideMsg();
+        rememberStudent(student);
         renderDetails(student);
         if (amountValue) amountValue.textContent = formattedAmount();
         if (payBtn) payBtn.textContent = 'Proceed to Pay ' + formattedAmount();
@@ -168,52 +195,97 @@
     });
   }
 
+  // Renders the CRM payment receipt. Built with DOM nodes rather than innerHTML
+  // because every value here originates from the URL or an external API.
+  function showPaymentSuccess(data, fallback) {
+    var receipt = data.payment || {};
+
+    msg.classList.remove('hidden');
+    msg.className = 'lookup-msg success';
+    msg.textContent = '';
+
+    var title = document.createElement('div');
+    title.textContent = '✔ ' + (data.message || 'Payment confirmation successful!');
+    msg.appendChild(title);
+
+    var box = document.createElement('div');
+    box.className = 'confirm-details';
+    [
+      ['Payment ID', receipt.txnId || data.payment_id || fallback.paymentId],
+      ['Application No', receipt.appNo],
+      ['Name', receipt.name],
+      ['Amount', formatAmount(receipt.amount || data.amount || fallback.amount)],
+      ['Payment Status', receipt.status || data.status || fallback.status],
+      ['Date', receipt.date],
+      ['Overall Payment Status', data.overallPayStatus]
+    ].forEach(function(row) {
+      if (!row[1]) return;
+      var line = document.createElement('div');
+      line.className = 'detail-row';
+      var label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = row[0];
+      var value = document.createElement('span');
+      value.className = 'value';
+      value.textContent = row[1];
+      line.appendChild(label);
+      line.appendChild(value);
+      box.appendChild(line);
+    });
+    msg.appendChild(box);
+
+    var note = document.createElement('div');
+    note.className = 'confirm-note';
+    note.textContent = 'Your payment status has been recorded and updated in the university CRM system.';
+    msg.appendChild(note);
+  }
+
   // Auto-detect payment return URL parameters (e.g. ?payment_id=pay_TKp4ZR4DgvTeK0&phone=8974563210&status=paid)
   (function checkUrlForPayment() {
     var urlParams = new URLSearchParams(window.location.search);
     var paymentId = urlParams.get('payment_id') || urlParams.get('razorpay_payment_id') || urlParams.get('pay_id') || urlParams.get('transaction_id') || urlParams.get('txn_id');
-    var phone = urlParams.get('phone') || urlParams.get('mobile') || urlParams.get('contact');
     var status = urlParams.get('status') || urlParams.get('payment_status') || 'Paid';
     var amount = urlParams.get('amount') || urlParams.get('paid_amount') || AMOUNT;
-    var email = urlParams.get('email') || '';
-    var name = urlParams.get('name') || '';
-    var course = urlParams.get('course') || '';
-    var admissionNo = urlParams.get('admission_no') || '';
 
-    if (paymentId && phone) {
-      showMsg('Processing payment confirmation for Payment ID: ' + paymentId + '...', 'loading');
-      fetch('/api/confirm-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          payment_id: paymentId,
-          phone: phone,
-          status: status,
-          amount: amount,
-          email: email,
-          name: name,
-          course: course,
-          admission_no: admissionNo
-        })
-      })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.success) {
-          var html = '✔ Payment Confirmation Successful!<br>' +
-            '<span style="font-size:0.92rem;font-weight:normal;color:#166534;display:block;margin-top:6px">' +
-            'Payment ID: <strong>' + paymentId + '</strong> | Amount: <strong>₹' + Number(amount || 1000).toLocaleString('en-IN') + '</strong> | Status: <strong>' + status + '</strong><br>' +
-            'Your payment status has been recorded and updated in the university CRM system.</span>';
-          showMsg(html, 'success', true);
-        } else {
-          var errDetail = (data.crm && data.crm.error) ? data.crm.error : data.message;
-          showMsg('Payment ID: ' + paymentId + ' extracted, but CRM update returned: ' + errDetail, 'error');
-        }
-      })
-      .catch(function(err) {
-        console.error('Failed to confirm payment:', err);
-        showMsg('Payment ID: ' + paymentId + ' extracted. Unable to connect to server.', 'error');
-      });
+    if (!paymentId) return;
+
+    // The gateway may return either identifier (or neither, if it drops them),
+    // so fall back to whatever the lookup step stored for this session.
+    var remembered = recallStudent();
+    var phone = (urlParams.get('phone') || urlParams.get('mobile') || urlParams.get('contact') || remembered.phone || '').replace(/\D/g, '');
+    var email = (urlParams.get('email') || urlParams.get('email_id') || remembered.email || '').trim();
+
+    if (!phone && !email) {
+      showMsg('Payment ID ' + paymentId + ' was received, but we could not identify your registration. ' +
+        'Please retrieve your details above or contact admission.online@cutm.ac.in with this Payment ID.', 'error');
+      return;
     }
+
+    showMsg('Processing payment confirmation for Payment ID: ' + paymentId + '...', 'loading');
+    fetch('/api/confirm-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_id: paymentId,
+        phone: phone,
+        email: email,
+        status: status,
+        amount: amount
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.success) {
+        showPaymentSuccess(data, { paymentId: paymentId, amount: amount, status: status });
+      } else {
+        var errDetail = (data.crm && data.crm.error) ? data.crm.error : data.message;
+        showMsg('Payment ID: ' + paymentId + ' recorded, but the CRM update returned: ' + errDetail, 'error');
+      }
+    })
+    .catch(function(err) {
+      console.error('Failed to confirm payment:', err);
+      showMsg('Payment ID: ' + paymentId + ' extracted. Unable to connect to server.', 'error');
+    });
   })();
 
   // Auto-fill and fetch CRM details if email or mobile query parameter is present in URL

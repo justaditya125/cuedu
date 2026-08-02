@@ -68,6 +68,10 @@ ALLOWED_ORIGINS=https://cuedu.cutm.ac.in
 
 CRM_WEBHOOK_URL=https://crm.cutmap.ac.in/api/public/inquiry/cuedu
 
+PAYMENT_AMOUNT=1000
+CRM_PAYMENT_STATUS_URL=https://crm.cutmap.ac.in/api/public/payments/cuedu/status
+CRM_PAYMENT_API_KEY=<crm-payment-api-key>
+
 LOG_LEVEL=info
 EOF
 ```
@@ -217,7 +221,14 @@ Logs:
 ## App behavior (for reference)
 
 - **Apply Now** → student registers → data sent directly to the CRM (no local database, no payment in between); a confirmation email with the CRM Registration ID is sent to the student; full CRM response is shown on a registration-success page.
-- **Pay Now** (homepage header) → opens the Razorpay payment page directly.
+- **Pay Now** (homepage header) → `payment.html`: the student retrieves their
+  registered details by email **or** mobile, then proceeds to the Razorpay page.
+- **Payment confirmation** → on return from Razorpay (either the
+  `/api/razorpay-webhook` callback or the `payment_id` query parameters on
+  `payment.html`), the payment ID is posted to `CRM_PAYMENT_STATUS_URL` together
+  with the student's mobile and/or email, and the CRM receipt is shown on screen.
+  Only one of mobile/email is required; the page remembers whichever was used
+  for the lookup, so the gateway does not have to echo it back.
 - **Contact form** → sent directly to the CRM.
 - All data is sent to the CRM at registration/contact time via `https://crm.cutmap.ac.in/api/public/inquiry/cuedu`.
 - Confirmation/admin emails are delivered via msmtp (sendmail interface); see Step 7.

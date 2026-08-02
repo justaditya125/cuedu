@@ -49,16 +49,36 @@ async function postToCRM(payload) {
   }
 }
 
-async function postPaymentToCRM({ mobile, paymentId, status, amount }) {
+function normalizeMobile(value) {
+  return String(value || '').replace(/\D/g, '').slice(-10);
+}
+
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+// Pushes a completed payment to the CRM. The student is identified by mobile
+// number, email address, or both - at least one is required by the CRM.
+async function postPaymentToCRM({ mobile, email, paymentId, status, amount }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const url = process.env.CRM_PAYMENT_STATUS_URL || 'https://crm.cutmap.ac.in/api/public/payments/cutm/status';
+    const url = process.env.CRM_PAYMENT_STATUS_URL || 'https://crm.cutmap.ac.in/api/public/payments/cuedu/status';
     const apiKey = process.env.CRM_PAYMENT_API_KEY || '7b9f2356c3755131e68b230a32cf9957ce2890781c102173a749298d4b848f55';
-    
+
     const parsedAmount = typeof amount === 'number' ? amount : (parseFloat(amount) || 0);
     const statusStr = String(status || 'Paid');
     const formattedStatus = (statusStr.toLowerCase() === 'paid' || statusStr.toLowerCase() === 'success') ? 'Paid' : statusStr;
+
+    const payload = {
+      paymentId: String(paymentId || ''),
+      status: formattedStatus,
+      amount: parsedAmount
+    };
+    const normalizedMobile = normalizeMobile(mobile);
+    if (normalizedMobile) payload.mobile = normalizedMobile;
+    const normalizedEmail = normalizeEmail(email);
+    if (normalizedEmail) payload.email = normalizedEmail;
 
     return await fetch(url, {
       method: 'POST',
@@ -67,12 +87,7 @@ async function postPaymentToCRM({ mobile, paymentId, status, amount }) {
         'X-API-Key': apiKey
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        mobile: String(mobile || '').replace(/\D/g, ''),
-        paymentId: String(paymentId || ''),
-        status: formattedStatus,
-        amount: parsedAmount
-      })
+      body: JSON.stringify(payload)
     });
   } finally {
     clearTimeout(timeout);
@@ -246,8 +261,14 @@ app.post('/api/contact',
 
 app.post('/api/confirm-payment',
   [
-    body('phone').trim().notEmpty().withMessage('Phone number is required'),
-    body('payment_id').trim().notEmpty().withMessage('Payment ID is required')
+    body('payment_id').trim().notEmpty().withMessage('Payment ID is required'),
+    body('email').optional({ values: 'falsy' }).isEmail().withMessage('Valid email address required'),
+    body().custom((value) => {
+      if (!normalizeMobile(value.phone) && !normalizeEmail(value.email)) {
+        throw new Error('A registered mobile number or email address is required');
+      }
+      return true;
+    })
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -256,12 +277,13 @@ app.post('/api/confirm-payment',
       return res.status(400).json({ success: false, message: 'Invalid payment data', errors: errors.array() });
     }
 
-    const { phone, payment_id, status = 'Paid', amount } = req.body;
+    const { phone, email, payment_id, status = 'Paid', amount } = req.body;
     const finalAmount = (amount && parseFloat(amount) > 0) ? parseFloat(amount) : (parseFloat(process.env.PAYMENT_AMOUNT) || 1000);
 
     try {
       const crmResponse = await postPaymentToCRM({
         mobile: phone,
+        email: email,
         paymentId: payment_id,
         status: status,
         amount: finalAmount
@@ -275,22 +297,27 @@ app.post('/api/confirm-payment',
       }
 
       if (!crmResponse.ok) {
-        logger.error('CRM payment status error', { status: crmResponse.status, phone, payment_id, crmData });
+        logger.error('CRM payment status error', { status: crmResponse.status, phone, email, payment_id, crmData });
         return res.status(502).json({ success: false, message: 'Failed to update payment status in CRM.', crm: crmData });
       }
 
-      logger.info('Payment status forwarded to CRM successfully', { phone, payment_id, status: status, amount: finalAmount });
+      logger.info('Payment status forwarded to CRM successfully', {
+        phone, email, payment_id, status, amount: finalAmount, overallPayStatus: crmData.overallPayStatus
+      });
       res.json({
         success: true,
-        message: 'Payment confirmation sent to CRM successfully.',
+        message: crmData.message || 'Payment confirmation sent to CRM successfully.',
         payment_id: payment_id,
         phone: phone,
+        email: email,
         status: status,
         amount: finalAmount,
+        payment: crmData.payment || null,
+        overallPayStatus: crmData.overallPayStatus || null,
         crm: crmData
       });
     } catch (err) {
-      logger.error('Payment confirmation error', { error: err.message, phone, payment_id });
+      logger.error('Payment confirmation error', { error: err.message, phone, email, payment_id });
       res.status(502).json({ success: false, message: 'Failed to notify CRM. Please try again.' });
     }
   }
@@ -303,7 +330,10 @@ app.all('/api/razorpay-webhook', async (req, res) => {
   const entity = (body.payload && body.payload.payment && body.payload.payment.entity) ? body.payload.payment.entity : {};
   
   const rawMobile = entity.contact || body.mobile || body.phone || query.mobile || query.phone || query.contact || '';
-  const mobile = String(rawMobile).replace(/\D/g, '').slice(-10);
+  const mobile = normalizeMobile(rawMobile);
+
+  const rawEmail = entity.email || body.email || body.email_id || query.email || query.email_id || '';
+  const email = normalizeEmail(rawEmail);
 
   const paymentId = entity.id || body.razorpay_payment_id || body.payment_id || body.paymentId || query.razorpay_payment_id || query.payment_id || query.pay_id || query.txnId || '';
 
@@ -312,29 +342,33 @@ app.all('/api/razorpay-webhook', async (req, res) => {
 
   const status = 'Paid';
 
-  logger.info('Razorpay Callback/Webhook received', { mobile, paymentId, amount, method: req.method });
+  logger.info('Razorpay Callback/Webhook received', { mobile, email, paymentId, amount, method: req.method });
 
-  if (mobile && paymentId) {
+  if ((mobile || email) && paymentId) {
     try {
       const crmResponse = await postPaymentToCRM({
         mobile: mobile,
+        email: email,
         paymentId: paymentId,
         status: status,
         amount: amount
       });
       let crmData;
       try { crmData = await crmResponse.json(); } catch (e) { crmData = {}; }
-      logger.info('Payment pushed directly to CRM DB via Razorpay Webhook', { mobile, paymentId, status, amount, crmRes: crmData });
+      logger.info('Payment pushed directly to CRM DB via Razorpay Webhook', { mobile, email, paymentId, status, amount, crmRes: crmData });
     } catch (err) {
-      logger.error('Failed pushing payment to CRM DB via Webhook', { error: err.message, mobile, paymentId });
+      logger.error('Failed pushing payment to CRM DB via Webhook', { error: err.message, mobile, email, paymentId });
     }
   }
 
   if (req.method === 'GET') {
-    return res.redirect(`/payment.html?payment_id=${encodeURIComponent(paymentId)}&phone=${encodeURIComponent(mobile)}&status=${encodeURIComponent(status)}&amount=${encodeURIComponent(amount)}`);
+    const params = new URLSearchParams({ payment_id: paymentId, status: status, amount: String(amount) });
+    if (mobile) params.set('phone', mobile);
+    if (email) params.set('email', email);
+    return res.redirect(`/payment.html?${params.toString()}`);
   }
 
-  res.json({ success: true, message: 'Payment data processed and pushed to CRM DB.', paymentId, mobile });
+  res.json({ success: true, message: 'Payment data processed and pushed to CRM DB.', paymentId, mobile, email });
 });
 
 
