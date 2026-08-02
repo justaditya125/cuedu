@@ -100,37 +100,59 @@ async function postPaymentToCRM({ mobile, email, paymentId, status, amount }) {
   }
 }
 
-async function lookupInCRM(query) {
+// Each attempt gets its own timeout budget. Sharing one AbortController across
+// the retry loop meant a slow first URL left no time for the second, surfacing
+// as "This operation was aborted".
+async function fetchWithTimeout(url, options, ms) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
-    const headers = {
-      'X-API-Key': process.env.CRM_API_KEY || '',
-      'Accept': 'application/json'
-    };
-    const params = new URLSearchParams();
-    Object.keys(query).forEach((k) => {
-      if (query[k]) params.set(k, query[k]);
-    });
+    return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-    const baseUrls = [
-      process.env.CRM_LOOKUP_URL || 'https://crm.cutmap.ac.in/api/public/inquiry/cuedu/lookup',
-      'https://crm.cutmap.ac.in/api/inquiry/cuedu/lookup'
-    ];
+async function lookupInCRM(query) {
+  const headers = {
+    'X-API-Key': process.env.CRM_API_KEY || '',
+    'Accept': 'application/json'
+  };
+  const params = new URLSearchParams();
+  Object.keys(query).forEach((k) => {
+    if (query[k]) params.set(k, query[k]);
+  });
 
-    for (const base of baseUrls) {
-      const url = new URL(base);
-      url.search = params.toString();
-      const resp = await fetch(url.toString(), { headers, signal: controller.signal });
+  const baseUrls = [
+    process.env.CRM_LOOKUP_URL || 'https://crm.cutmap.ac.in/api/public/inquiry/cuedu/lookup',
+    'https://crm.cutmap.ac.in/api/inquiry/cuedu/lookup'
+  ];
+  const perAttemptMs = Number(process.env.CRM_LOOKUP_TIMEOUT_MS) || 10000;
+
+  let lastError = null;
+  for (const base of baseUrls) {
+    const url = new URL(base);
+    url.search = params.toString();
+    try {
+      const resp = await fetchWithTimeout(url.toString(), { headers }, perAttemptMs);
       const contentType = resp.headers.get('content-type') || '';
+      // An HTML body means the request fell through to the CRM's SPA, i.e. the
+      // route does not exist - try the next base URL.
       if (!contentType.includes('text/html')) {
         return resp;
       }
+      logger.warn('CRM lookup returned HTML, trying next base URL', { base });
+    } catch (err) {
+      lastError = err;
+      logger.warn('CRM lookup attempt failed', {
+        base,
+        error: err.name === 'AbortError' ? `timed out after ${perAttemptMs}ms` : err.message
+      });
     }
-    return new Response('', { status: 204 });
-  } finally {
-    clearTimeout(timeout);
   }
+
+  if (lastError) throw lastError;
+  return new Response('', { status: 204 });
 }
 
 // The CRM payment API rejects a payload without a mobile number ("mobile,
@@ -391,8 +413,19 @@ app.post('/api/confirm-payment',
       }
 
       if (!crmResponse.ok) {
-        logger.error('CRM payment status error', { status: crmResponse.status, phone, email, payment_id, crmData });
-        return res.status(502).json({ success: false, message: 'Failed to update payment status in CRM.', crm: crmData });
+        logger.error('CRM payment status error', { status: crmResponse.status, mobile, email, payment_id, crmData });
+        // Surface the CRM's own wording - "No application found for this mobile
+        // number in this tenant" is actionable; "Failed to update" is not. The
+        // payment itself has already been taken, so say so explicitly.
+        const crmReason = crmData && (crmData.error || crmData.message);
+        return res.status(502).json({
+          success: false,
+          message: crmReason
+            ? `Your payment was received, but the CRM could not be updated: ${crmReason} Please contact admissions on +91-7846850060 with your Payment ID.`
+            : 'Your payment was received, but the CRM could not be updated. Please contact admissions on +91-7846850060 with your Payment ID.',
+          payment_id: payment_id,
+          crm: crmData
+        });
       }
 
       logger.info('Payment status forwarded to CRM successfully', {
