@@ -519,9 +519,13 @@ app.all('/api/razorpay-webhook', async (req, res) => {
 });
 
 
+const NOT_FOUND_MESSAGE = 'No registered details found for those details. ' +
+  'Please check your mobile number or email address, or register first. ' +
+  'If you have already registered, contact admissions on +91-7846850060.';
+
 app.get('/api/payment/lookup', async (req, res) => {
-  const mobile = (req.query.mobile || '').replace(/\D/g, '');
-  const email = (req.query.email || '').trim().toLowerCase();
+  const mobile = normalizeMobile(req.query.mobile);
+  const email = normalizeEmail(req.query.email);
 
   if (mobile && email) {
     return res.status(400).json({ success: false, message: 'Provide either an email address or a mobile number, not both.' });
@@ -533,9 +537,19 @@ app.get('/api/payment/lookup', async (req, res) => {
   try {
     const crmResponse = await lookupInCRM({ mobile, email });
 
-    if (!crmResponse.ok && crmResponse.status === 204) {
+    // 204 is the "no usable response" sentinel from lookupInCRM. Note 204 is a
+    // 2xx, so this must not be guarded by !ok - that check never fired.
+    if (crmResponse.status === 204) {
       logger.warn('CRM lookup returned no JSON data', { mobile, email });
-      return res.json({ success: false, message: 'No registered details found. Please check your details or register first.' });
+      return res.json({ success: false, notFound: true, message: NOT_FOUND_MESSAGE });
+    }
+
+    // A 404 is the CRM saying "no such lead" - an ordinary outcome, not a
+    // server fault. Returning 502 here made every unregistered visitor look
+    // like a gateway error in the browser console.
+    if (crmResponse.status === 404) {
+      logger.info('No CRM lead found for lookup', { mobile, email });
+      return res.json({ success: false, notFound: true, message: NOT_FOUND_MESSAGE });
     }
 
     const contentType = crmResponse.headers.get('content-type') || '';
@@ -543,9 +557,8 @@ app.get('/api/payment/lookup', async (req, res) => {
 
     let crmData;
     if (contentType.includes('text/html')) {
-      crmData = { message: 'No registered details found for the provided mobile/email.' };
       logger.warn('CRM lookup returned HTML (no data found)', { mobile, email, status: crmResponse.status });
-      return res.json({ success: false, message: 'No registered details found. Please check your details or register first.', crm: crmData });
+      return res.json({ success: false, notFound: true, message: NOT_FOUND_MESSAGE });
     }
 
     try {
