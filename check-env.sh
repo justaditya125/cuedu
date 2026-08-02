@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Verifies the cuedu .env and its CRM connectivity. Read-only: creates no leads
 # and writes no payments. Secrets are masked in all output.
-APP_DIR="${1:-/var/www/cuedu}"
+# Defaults to the current directory; pass an explicit path to override.
+APP_DIR="${1:-$(pwd)}"
+# PM2 app name is auto-detected from the running process list, since it varies
+# between deployments.
+PM2_APP="${2:-}"
 
 pass() { printf '  \033[32mPASS\033[0m %s\n' "$1"; }
 fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; }
@@ -9,13 +13,37 @@ warn() { printf '  \033[33mWARN\033[0m %s\n' "$1"; }
 mask() { local v="$1"; [ ${#v} -le 8 ] && echo "<set,short>" || echo "${v:0:4}…${v: -4} (${#v} chars)"; }
 
 echo "=== 1. Which .env does the running process use? ==="
-CWD=$(pm2 describe cuedu 2>/dev/null | awk -F'│' '/exec cwd/{gsub(/ /,"",$3); print $3}')
-if [ -n "$CWD" ]; then
-  echo "  pm2 exec cwd: $CWD"
+# Find whichever PM2 app is running this project's server.js, whatever it is named.
+DETECT=$(pm2 jlist 2>/dev/null | node -e '
+let raw=""; process.stdin.on("data",d=>raw+=d).on("end",()=>{
+  let list=[]; try { list=JSON.parse(raw)||[]; } catch(e) {}
+  const hit=list.find(p=>/server\.js$/.test((p.pm2_env&&p.pm2_env.pm_exec_path)||""))||list[0];
+  if(!hit) return;
+  const e=hit.pm2_env||{};
+  console.log([hit.name,e.pm_cwd||"",e.pm_exec_path||"",hit.pid||"",e.status||""].join("\t"));
+});' 2>/dev/null)
+
+if [ -n "$DETECT" ]; then
+  PM2_APP=$(echo "$DETECT" | cut -f1)
+  CWD=$(echo "$DETECT"    | cut -f2)
+  SCRIPT=$(echo "$DETECT" | cut -f3)
+  PMPID=$(echo "$DETECT"  | cut -f4)
+  pass "pm2 app '$PM2_APP' (pid $PMPID)"
+  echo "     script : $SCRIPT"
+  echo "     cwd    : $CWD   <- dotenv reads .env from HERE"
   ENV_FILE="$CWD/.env"
 else
-  warn "pm2 process 'cuedu' not found - falling back to $APP_DIR"
+  warn "no pm2 app found running a server.js - is the app started? try: pm2 list"
+  CWD="$APP_DIR"
   ENV_FILE="$APP_DIR/.env"
+fi
+# If the detected cwd has no .env, check the other plausible spot before failing.
+if [ ! -f "$ENV_FILE" ]; then
+  for alt in "$APP_DIR/.env" "$APP_DIR/backend/.env" "$CWD/backend/.env"; do
+    [ -f "$alt" ] && { warn "no .env at $ENV_FILE, but one exists at $alt"
+                       warn "the app only reads the one in its cwd - move it, or restart from that dir"
+                       ENV_FILE="$alt"; break; }
+  done
 fi
 [ -f "$ENV_FILE" ] && pass "$ENV_FILE exists ($(stat -c '%y' "$ENV_FILE" 2>/dev/null | cut -d. -f1))" \
                    || { fail "$ENV_FILE MISSING - dotenv loads relative to cwd, so this is the file that counts"
@@ -78,7 +106,7 @@ echo "  NOTE: the inquiry POST endpoint is not probed - it would create a real l
 
 echo
 echo "=== 5. Is the RUNNING process using this .env? ==="
-PID=$(pm2 pid cuedu 2>/dev/null)
+PID="${PMPID:-$(pm2 pid "$PM2_APP" 2>/dev/null)}"
 if [ -n "$PID" ] && [ "$PID" != "0" ]; then
   running=$(tr '\0' '\n' < /proc/$PID/environ 2>/dev/null | grep '^CRM_WEBHOOK_URL=' | cut -d= -f2-)
   if [ -z "$running" ]; then
@@ -86,12 +114,12 @@ if [ -n "$PID" ] && [ "$PID" != "0" ]; then
   elif [ "$running" = "$CRM_WEBHOOK_URL" ]; then
     pass "running process matches the .env"
   else
-    fail "running process still has: $running  -> run: pm2 restart cuedu --update-env"
+    fail "running process still has: $running  -> run: pm2 restart $PM2_APP --update-env"
   fi
-  started=$(pm2 describe cuedu 2>/dev/null | grep -i uptime)
+  started=$(pm2 describe "$PM2_APP" 2>/dev/null | grep -i uptime)
   echo "  $started  (must be AFTER your .env edit)"
 else
-  warn "pm2 process 'cuedu' is not running"
+  warn "pm2 app not running"
 fi
 
 echo
