@@ -127,6 +127,26 @@ async function lookupInCRM(query) {
   }
 }
 
+// The CRM payment API rejects a payload without a mobile number ("mobile,
+// paymentId, and status are required"), even though it accepts email as an
+// extra field. When a student is identified only by email - which is what the
+// payment gateway usually hands back - resolve their mobile from the lead
+// lookup first.
+async function resolveMobileFromEmail(email) {
+  try {
+    const resp = await lookupInCRM({ email });
+    const contentType = resp.headers.get('content-type') || '';
+    if (!resp.ok || !contentType.includes('json')) return '';
+    const data = await resp.json();
+    const lead = data.lead || data.data || data.inquiry || data;
+    if (!lead) return '';
+    return normalizeMobile(lead.mobile || lead.phone || lead.mobile_number || lead.contact);
+  } catch (err) {
+    logger.warn('Mobile lookup by email failed', { error: err.message, email });
+    return '';
+  }
+}
+
 function sendConfirmationEmail({ name, email, course, leadId, phone }) {
   const subject = 'Registration Confirmation - Centurion University';
   const text =
@@ -281,8 +301,21 @@ app.post('/api/confirm-payment',
     const finalAmount = (amount && parseFloat(amount) > 0) ? parseFloat(amount) : (parseFloat(process.env.PAYMENT_AMOUNT) || 1000);
 
     try {
+      let mobile = normalizeMobile(phone);
+      if (!mobile && email) {
+        mobile = await resolveMobileFromEmail(email);
+        if (!mobile) {
+          logger.warn('No registration found for email during payment confirmation', { email, payment_id });
+          return res.status(404).json({
+            success: false,
+            message: 'We could not find a registration for that email address. Please use your registered mobile number, or contact support with your Payment ID.'
+          });
+        }
+        logger.info('Resolved mobile from email for payment confirmation', { email, payment_id });
+      }
+
       const crmResponse = await postPaymentToCRM({
-        mobile: phone,
+        mobile: mobile,
         email: email,
         paymentId: payment_id,
         status: status,
@@ -302,13 +335,13 @@ app.post('/api/confirm-payment',
       }
 
       logger.info('Payment status forwarded to CRM successfully', {
-        phone, email, payment_id, status, amount: finalAmount, overallPayStatus: crmData.overallPayStatus
+        mobile, email, payment_id, status, amount: finalAmount, overallPayStatus: crmData.overallPayStatus
       });
       res.json({
         success: true,
         message: crmData.message || 'Payment confirmation sent to CRM successfully.',
         payment_id: payment_id,
-        phone: phone,
+        phone: mobile,
         email: email,
         status: status,
         amount: finalAmount,
@@ -346,8 +379,13 @@ app.all('/api/razorpay-webhook', async (req, res) => {
 
   if ((mobile || email) && paymentId) {
     try {
+      // Razorpay often returns only the email; the CRM requires a mobile.
+      const resolvedMobile = mobile || (email ? await resolveMobileFromEmail(email) : '');
+      if (!resolvedMobile) {
+        logger.warn('Could not resolve a mobile for payment webhook', { email, paymentId });
+      }
       const crmResponse = await postPaymentToCRM({
-        mobile: mobile,
+        mobile: resolvedMobile,
         email: email,
         paymentId: paymentId,
         status: status,
