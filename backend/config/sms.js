@@ -17,7 +17,16 @@ function buildOtpMessage(otp) {
   return template.replace('{otp}', otp);
 }
 
-async function sendSms(mobile, message) {
+// Two sender IDs are provisioned: one for the first attempt and one for
+// retries. They route differently, so a resend on the alternate sender has a
+// better chance of landing when the first did not.
+function senderFor(isResend) {
+  const primary = process.env.SMS_SENDERID || 'GTIDSP';
+  const resend = process.env.SMS_SENDERID_RESEND || primary;
+  return isResend ? resend : primary;
+}
+
+async function sendSms(mobile, message, options) {
   const missing = missingConfig();
   if (missing.length) {
     throw new Error('SMS gateway not configured - missing ' + missing.join(', '));
@@ -29,7 +38,7 @@ async function sendSms(mobile, message) {
   const url = new URL(SMS_ENDPOINT);
   url.searchParams.set('username', process.env.SMS_USERNAME);
   url.searchParams.set('apikey', process.env.SMS_APIKEY);
-  url.searchParams.set('senderid', process.env.SMS_SENDERID || 'GTIDSM');
+  url.searchParams.set('senderid', senderFor(options && options.isResend));
   url.searchParams.set('templateid', process.env.SMS_TEMPLATEID);
   url.searchParams.set('mobile', mobile);
   url.searchParams.set('message', message);
@@ -56,4 +65,4 @@ async function sendSms(mobile, message) {
   }
 }
 
-module.exports = { sendSms, buildOtpMessage, isConfigured, missingConfig };
+module.exports = { sendSms, buildOtpMessage, isConfigured, missingConfig, senderFor };

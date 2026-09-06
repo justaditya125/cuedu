@@ -65,6 +65,15 @@ function canSend(channel, value) {
   return { ok: true };
 }
 
+// How many codes have gone to this destination in the current hour. Read it
+// before issue(), which appends to the same history.
+function sendCount(channel, value) {
+  const rec = pending.get(keyFor(channel, value));
+  if (!rec) return 0;
+  const now = Date.now();
+  return (rec.sends || []).filter((t) => now - t < HOUR_MS).length;
+}
+
 function issue(channel, value) {
   const key = keyFor(channel, value);
   const now = Date.now();
@@ -146,6 +155,7 @@ sweeper.unref();
 
 module.exports = {
   canSend,
+  sendCount,
   issue,
   verify,
   verifyToken,

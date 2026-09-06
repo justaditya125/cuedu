@@ -258,10 +258,12 @@ app.post('/api/otp/send', async (req, res) => {
     });
   }
 
+  // Read before issue(), which appends to the same send history.
+  const isResend = otp.sendCount(channel, value) > 0;
   const code = otp.issue(channel, value);
   try {
     if (channel === 'mobile') {
-      await sms.sendSms(value, sms.buildOtpMessage(code));
+      await sms.sendSms(value, sms.buildOtpMessage(code), { isResend: isResend });
     } else {
       await mailer.sendMail({
         to: value,
@@ -273,7 +275,12 @@ app.post('/api/otp/send', async (req, res) => {
       });
     }
     // The code itself is never logged.
-    logger.info('OTP sent', { channel, to: maskDestination(channel, value) });
+    logger.info('OTP sent', {
+      channel,
+      to: maskDestination(channel, value),
+      resend: isResend,
+      sender: channel === 'mobile' ? sms.senderFor(isResend) : undefined
+    });
     res.json({
       success: true,
       message: channel === 'mobile'
