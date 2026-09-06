@@ -43,10 +43,12 @@ async function sendSms(mobile, message) {
     if (!resp.ok) {
       throw new Error('SMS gateway HTTP ' + resp.status + ': ' + body.slice(0, 200));
     }
-    // The gateway answers 200 with a plain-text body even for failures, so the
-    // body has to be inspected rather than trusting the status code.
-    if (/error|invalid|fail|denied|insufficient/i.test(body)) {
-      throw new Error('SMS gateway rejected the request: ' + body.slice(0, 200));
+    // The gateway answers 200 for failures too, so the body decides. Accepted
+    // messages return a campaign id - {'campid':'3a5a0bb2586e7c3d2a85'} -
+    // while rejections return {'Error':'Invalid Template ID'}. Requiring the
+    // campid is safer than blocklisting error words.
+    if (!/campid/i.test(body)) {
+      throw new Error('SMS gateway did not accept the message: ' + body.slice(0, 200));
     }
     return body;
   } finally {
