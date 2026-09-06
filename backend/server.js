@@ -9,6 +9,8 @@ require('dotenv').config();
 
 const logger = require('./config/logger');
 const mailer = require('./config/mailer');
+const otp = require('./config/otp');
+const sms = require('./config/sms');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -204,6 +206,116 @@ function sendConfirmationEmail({ name, email, course, leadId, phone }) {
   }
 }
 
+// OTP verification is enforced only when OTP_REQUIRED=true, so the code can be
+// deployed before the SMS gateway is configured without blocking registrations.
+const OTP_REQUIRED = process.env.OTP_REQUIRED === 'true';
+
+// Partially masks a destination for logs - enough to correlate, not enough to
+// leak a full contact detail into log files.
+function maskDestination(channel, value) {
+  const s = String(value || '');
+  if (channel === 'mobile') return s.length > 4 ? '******' + s.slice(-4) : '****';
+  const at = s.indexOf('@');
+  if (at < 1) return '****';
+  return s[0] + '***' + s.slice(at);
+}
+
+function normalizeOtpTarget(channel, raw) {
+  return channel === 'mobile' ? normalizeMobile(raw) : normalizeEmail(raw);
+}
+
+function validOtpTarget(channel, value) {
+  return channel === 'mobile'
+    ? /^\d{10}$/.test(value)
+    : /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+}
+
+app.post('/api/otp/send', async (req, res) => {
+  const channel = String(req.body && req.body.channel || '').toLowerCase();
+  if (channel !== 'mobile' && channel !== 'email') {
+    return res.status(400).json({ success: false, message: 'Channel must be "mobile" or "email".' });
+  }
+
+  const value = normalizeOtpTarget(channel, req.body.value);
+  if (!validOtpTarget(channel, value)) {
+    return res.status(400).json({
+      success: false,
+      message: channel === 'mobile'
+        ? 'Enter a valid 10-digit mobile number.'
+        : 'Enter a valid email address.'
+    });
+  }
+
+  const gate = otp.canSend(channel, value);
+  if (!gate.ok) {
+    logger.warn('OTP send throttled', { channel, to: maskDestination(channel, value), reason: gate.reason });
+    return res.status(429).json({
+      success: false,
+      retryAfter: gate.retryAfterSec,
+      message: gate.reason === 'cooldown'
+        ? `Please wait ${gate.retryAfterSec}s before requesting another code.`
+        : 'Too many codes requested for these details. Please try again later or contact admissions.'
+    });
+  }
+
+  const code = otp.issue(channel, value);
+  try {
+    if (channel === 'mobile') {
+      await sms.sendSms(value, sms.buildOtpMessage(code));
+    } else {
+      await mailer.sendMail({
+        to: value,
+        subject: 'Your Centurion University verification code',
+        text: 'Dear Applicant,\n\nYour verification code is: ' + code +
+              '\n\nIt is valid for ' + Math.round(otp.OTP_TTL_MS / 60000) + ' minutes. ' +
+              'If you did not request this, please ignore this email.\n\n' +
+              'Centurion University Online\n'
+      });
+    }
+    // The code itself is never logged.
+    logger.info('OTP sent', { channel, to: maskDestination(channel, value) });
+    res.json({
+      success: true,
+      message: channel === 'mobile'
+        ? 'Verification code sent by SMS.'
+        : 'Verification code sent to your email.',
+      expiresInSec: Math.round(otp.OTP_TTL_MS / 1000),
+      resendInSec: Math.round(otp.RESEND_COOLDOWN_MS / 1000)
+    });
+  } catch (err) {
+    logger.error('OTP send failed', { channel, to: maskDestination(channel, value), error: err.message });
+    res.status(502).json({
+      success: false,
+      message: 'Could not send the verification code right now. Please try again, or contact admissions on +91-7846850060.'
+    });
+  }
+});
+
+app.post('/api/otp/verify', (req, res) => {
+  const channel = String(req.body && req.body.channel || '').toLowerCase();
+  if (channel !== 'mobile' && channel !== 'email') {
+    return res.status(400).json({ success: false, message: 'Channel must be "mobile" or "email".' });
+  }
+
+  const value = normalizeOtpTarget(channel, req.body.value);
+  const code = String(req.body.otp || '').trim();
+  const result = otp.verify(channel, value, code);
+
+  if (!result.ok) {
+    const messages = {
+      not_requested: 'Request a verification code first.',
+      expired: 'That code has expired. Please request a new one.',
+      too_many_attempts: 'Too many incorrect attempts. Please request a new code.',
+      mismatch: 'Incorrect code. ' + (result.attemptsLeft || 0) + ' attempt(s) remaining.'
+    };
+    logger.warn('OTP verification failed', { channel, to: maskDestination(channel, value), reason: result.reason });
+    return res.status(400).json({ success: false, reason: result.reason, message: messages[result.reason] || 'Verification failed.' });
+  }
+
+  logger.info('OTP verified', { channel, to: maskDestination(channel, value) });
+  res.json({ success: true, token: result.token, message: 'Verified.' });
+});
+
 app.post('/api/register',
   [
     body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
@@ -231,6 +343,27 @@ app.post('/api/register',
     }
 
     const { name, email, phone, qualification, course } = req.body;
+
+    // Both channels must carry a valid proof-of-verification token, otherwise
+    // the OTP step could simply be skipped by posting to this endpoint directly.
+    if (OTP_REQUIRED) {
+      const mobileOk = otp.verifyToken('mobile', phone, req.body.phone_otp_token);
+      const emailOk = otp.verifyToken('email', email, req.body.email_otp_token);
+      if (!mobileOk || !emailOk) {
+        logger.warn('Registration rejected: OTP verification missing or invalid', {
+          email, mobileVerified: mobileOk, emailVerified: emailOk
+        });
+        return res.status(401).json({
+          success: false,
+          otpRequired: true,
+          message: !mobileOk && !emailOk
+            ? 'Please verify both your mobile number and email address before submitting.'
+            : (!mobileOk
+                ? 'Please verify your mobile number before submitting.'
+                : 'Please verify your email address before submitting.')
+        });
+      }
+    }
 
     try {
       const crmResponse = await postToCRM({
@@ -639,4 +772,21 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Make OTP misconfiguration loud at boot rather than at the first applicant.
+  if (OTP_REQUIRED) {
+    logger.info('OTP verification is REQUIRED for registration');
+    const missing = sms.missingConfig();
+    if (missing.length) {
+      logger.error('OTP is required but the SMS gateway is not configured - mobile verification WILL FAIL', { missing });
+    }
+    if (mailer.getMailerVia() === 'none') {
+      logger.error('OTP is required but no mail transport is configured - email verification WILL FAIL');
+    }
+    if (otp.TOKEN_SECRET_IS_EPHEMERAL) {
+      logger.warn('OTP_TOKEN_SECRET is not set - verification tokens are invalidated on every restart');
+    }
+  } else {
+    logger.warn('OTP_REQUIRED is not "true" - registrations are accepted without mobile/email verification');
+  }
 });

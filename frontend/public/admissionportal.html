@@ -13,6 +13,19 @@
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/img/logo.png" type="image/png">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .otp-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+    .otp-row button{background:#82C8DE;color:#0b3c4d;border:none;padding:8px 16px;border-radius:50px;
+      font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap}
+    .otp-row button:hover:not(:disabled){background:#6bb8d1}
+    .otp-row button:disabled{opacity:.55;cursor:not-allowed}
+    .otp-row .otp-code{flex:0 0 130px;margin:0;padding:8px 12px;letter-spacing:.18em;text-align:center}
+    .otp-status{font-size:.82rem;color:#64748b;flex:1 1 100%}
+    .otp-status.ok{color:#15803d;font-weight:700}
+    .otp-status.err{color:#b91c1c}
+    .form-group.verified input[type="email"],
+    .form-group.verified input[type="tel"]{border-color:#15803d;background:#f0fdf4}
+  </style>
 </head>
 <body>
 
@@ -67,10 +80,24 @@
             <div class="form-group">
               <label for="email">Email Address</label>
               <input type="email" id="email" name="email" placeholder="Enter your email" required>
+              <div class="otp-row" data-channel="email">
+                <button type="button" class="otp-send">Send OTP</button>
+                <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code" placeholder="6-digit code" hidden>
+                <button type="button" class="otp-verify" hidden>Verify</button>
+                <span class="otp-status" role="status" aria-live="polite"></span>
+              </div>
             </div>
             <div class="form-group">
               <label for="phone">Phone Number</label>
               <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+              <div class="otp-row" data-channel="mobile">
+                <button type="button" class="otp-send">Send OTP</button>
+                <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
+                       autocomplete="one-time-code" placeholder="6-digit code" hidden>
+                <button type="button" class="otp-verify" hidden>Verify</button>
+                <span class="otp-status" role="status" aria-live="polite"></span>
+              </div>
             </div>
             <div class="form-group">
               <label for="qualification">Highest Qualification</label>
