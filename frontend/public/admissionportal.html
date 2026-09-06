@@ -19,7 +19,13 @@
       font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap}
     .otp-row button:hover:not(:disabled){background:#6bb8d1}
     .otp-row button:disabled{opacity:.55;cursor:not-allowed}
-    .otp-row .otp-code{flex:0 0 130px;margin:0;padding:8px 12px;letter-spacing:.18em;text-align:center}
+    .otp-row .otp-code{flex:0 0 140px;margin:0;padding:8px 12px;letter-spacing:.18em;text-align:center}
+    .otp-send-all-group{margin-bottom:18px}
+    .otp-send-all{width:100%;background:#0b3c4d;color:#fff;border:none;padding:12px 20px;
+      border-radius:50px;font-size:.9rem;font-weight:700;cursor:pointer}
+    .otp-send-all:hover:not(:disabled){background:#14536b}
+    .otp-send-all:disabled{opacity:.55;cursor:not-allowed}
+    .otp-send-all-group .otp-status{display:block;margin-top:8px;text-align:center}
     .otp-status{font-size:.82rem;color:#64748b;flex:1 1 100%}
     .otp-status.ok{color:#15803d;font-weight:700}
     .otp-status.err{color:#b91c1c}
@@ -81,10 +87,10 @@
               <label for="email">Email Address</label>
               <input type="email" id="email" name="email" placeholder="Enter your email" required>
               <div class="otp-row" data-channel="email">
-                <button type="button" class="otp-send">Send OTP</button>
                 <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
-                       autocomplete="one-time-code" placeholder="6-digit code" hidden>
+                       autocomplete="one-time-code" placeholder="Email code" hidden>
                 <button type="button" class="otp-verify" hidden>Verify</button>
+                <button type="button" class="otp-resend" hidden>Resend</button>
                 <span class="otp-status" role="status" aria-live="polite"></span>
               </div>
             </div>
@@ -92,12 +98,16 @@
               <label for="phone">Phone Number</label>
               <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
               <div class="otp-row" data-channel="mobile">
-                <button type="button" class="otp-send">Send OTP</button>
                 <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
-                       autocomplete="one-time-code" placeholder="6-digit code" hidden>
+                       autocomplete="one-time-code" placeholder="SMS code" hidden>
                 <button type="button" class="otp-verify" hidden>Verify</button>
+                <button type="button" class="otp-resend" hidden>Resend</button>
                 <span class="otp-status" role="status" aria-live="polite"></span>
               </div>
+            </div>
+            <div class="form-group otp-send-all-group">
+              <button type="button" id="otpSendAll" class="otp-send-all">Send OTP to Email &amp; Phone</button>
+              <span class="otp-status" id="otpSendAllStatus" role="status" aria-live="polite"></span>
             </div>
             <div class="form-group">
               <label for="qualification">Highest Qualification</label>

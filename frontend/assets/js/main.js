@@ -90,31 +90,110 @@ document.addEventListener('DOMContentLoaded', function() {
     el.className = 'otp-status' + (kind ? ' ' + kind : '');
   }
 
-  function startResendCountdown(button, seconds) {
+  function startResendCountdown(button, seconds, restoreLabel) {
     let left = seconds;
+    const idleLabel = restoreLabel || 'Resend';
     button.disabled = true;
-    const label = button.dataset.label || button.textContent;
-    button.dataset.label = label;
     button.textContent = 'Resend in ' + left + 's';
     const tick = setInterval(function() {
       left -= 1;
       if (left <= 0) {
         clearInterval(tick);
         button.disabled = false;
-        button.textContent = 'Resend OTP';
+        button.textContent = idleLabel;
       } else {
         button.textContent = 'Resend in ' + left + 's';
       }
     }, 1000);
   }
 
-  otpRows.forEach(function(row) {
-    const channel = row.dataset.channel;
-    const sendBtn = row.querySelector('.otp-send');
+  // Sends one channel's code and reveals its verify controls. Returns a promise
+  // resolving to whether it went out, so the combined button can report on both.
+  function requestOtp(channel) {
+    const row = document.querySelector('.otp-row[data-channel="' + channel + '"]');
+    if (!row) return Promise.resolve({ channel: channel, ok: false });
+
     const codeInput = row.querySelector('.otp-code');
     const verifyBtn = row.querySelector('.otp-verify');
+    const resendBtn = row.querySelector('.otp-resend');
+    const value = otpTargetValue(channel);
+
+    if (otpTokens[channel]) return Promise.resolve({ channel: channel, ok: true, skipped: true });
+    if (!value) {
+      setOtpStatus(row, channel === 'mobile' ? 'Enter your mobile number first.' : 'Enter your email first.', 'err');
+      return Promise.resolve({ channel: channel, ok: false });
+    }
+
+    setOtpStatus(row, 'Sending code...', '');
+    return fetch('/api/otp/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: channel, value: value })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          codeInput.hidden = false;
+          verifyBtn.hidden = false;
+          verifyBtn.disabled = false;
+          resendBtn.hidden = false;
+          setOtpStatus(row, data.message, '');
+          startResendCountdown(resendBtn, data.resendInSec || 60);
+        } else {
+          setOtpStatus(row, data.message || 'Could not send the code.', 'err');
+        }
+        return { channel: channel, ok: Boolean(data.success) };
+      })
+      .catch(function() {
+        setOtpStatus(row, 'Network error. Please try again.', 'err');
+        return { channel: channel, ok: false };
+      });
+  }
+
+  // One click sends both codes; each is then verified separately below.
+  const sendAllBtn = document.getElementById('otpSendAll');
+  const sendAllStatus = document.getElementById('otpSendAllStatus');
+
+  function setSendAllStatus(text, kind) {
+    if (!sendAllStatus) return;
+    sendAllStatus.textContent = text || '';
+    sendAllStatus.className = 'otp-status' + (kind ? ' ' + kind : '');
+  }
+
+  if (sendAllBtn) {
+    sendAllBtn.addEventListener('click', function() {
+      const missing = [];
+      if (!otpTargetValue('email')) missing.push('email address');
+      if (otpTargetValue('mobile').length !== 10) missing.push('10-digit mobile number');
+      if (missing.length) {
+        setSendAllStatus('Enter your ' + missing.join(' and ') + ' first.', 'err');
+        return;
+      }
+
+      sendAllBtn.disabled = true;
+      setSendAllStatus('Sending codes...', '');
+
+      Promise.all([requestOtp('email'), requestOtp('mobile')]).then(function(results) {
+        const sent = results.filter(function(r) { return r.ok; }).length;
+        if (sent === 2) {
+          setSendAllStatus('Codes sent to your email and mobile. Enter each one above.', 'ok');
+        } else if (sent === 1) {
+          setSendAllStatus('One code could not be sent - see the message next to that field.', 'err');
+        } else {
+          setSendAllStatus('Could not send the codes. Please check your details and try again.', 'err');
+        }
+        startResendCountdown(sendAllBtn, 60, 'Send OTP to Email & Phone');
+      });
+    });
+  }
+
+  otpRows.forEach(function(row) {
+    const channel = row.dataset.channel;
+    const codeInput = row.querySelector('.otp-code');
+    const verifyBtn = row.querySelector('.otp-verify');
+    const resendBtn = row.querySelector('.otp-resend');
     const field = otpFieldFor(channel);
-    if (!channel || !sendBtn || !codeInput || !verifyBtn || !field) return;
+    if (!channel || !codeInput || !verifyBtn || !resendBtn || !field) return;
 
     // Changing the address or number after verifying invalidates the proof -
     // otherwise someone could verify one value and register another.
@@ -125,45 +204,13 @@ document.addEventListener('DOMContentLoaded', function() {
         codeInput.value = '';
         codeInput.hidden = true;
         verifyBtn.hidden = true;
-        sendBtn.hidden = false;
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Send OTP';
+        resendBtn.hidden = true;
         setOtpStatus(row, 'Details changed - please verify again.', 'err');
+        if (sendAllBtn) sendAllBtn.disabled = false;
       }
     });
 
-    sendBtn.addEventListener('click', function() {
-      const value = otpTargetValue(channel);
-      if (!value) {
-        setOtpStatus(row, channel === 'mobile' ? 'Enter your mobile number first.' : 'Enter your email first.', 'err');
-        return;
-      }
-      sendBtn.disabled = true;
-      setOtpStatus(row, 'Sending code...', '');
-
-      fetch('/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel: channel, value: value })
-      })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.success) {
-            codeInput.hidden = false;
-            verifyBtn.hidden = false;
-            codeInput.focus();
-            setOtpStatus(row, data.message, '');
-            startResendCountdown(sendBtn, data.resendInSec || 60);
-          } else {
-            sendBtn.disabled = false;
-            setOtpStatus(row, data.message || 'Could not send the code.', 'err');
-          }
-        })
-        .catch(function() {
-          sendBtn.disabled = false;
-          setOtpStatus(row, 'Network error. Please try again.', 'err');
-        });
-    });
+    resendBtn.addEventListener('click', function() { requestOtp(channel); });
 
     verifyBtn.addEventListener('click', function() {
       const code = codeInput.value.trim();
@@ -186,8 +233,9 @@ document.addEventListener('DOMContentLoaded', function() {
             field.closest('.form-group').classList.add('verified');
             codeInput.hidden = true;
             verifyBtn.hidden = true;
-            sendBtn.hidden = true;
+            resendBtn.hidden = true;
             setOtpStatus(row, '✓ Verified', 'ok');
+            if (otpBothVerified()) setSendAllStatus('Both verified - you can submit the form.', 'ok');
           } else {
             verifyBtn.disabled = false;
             setOtpStatus(row, data.message || 'Verification failed.', 'err');
