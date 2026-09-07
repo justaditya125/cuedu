@@ -72,12 +72,50 @@ PAYMENT_AMOUNT=1000
 CRM_PAYMENT_STATUS_URL=https://crm.cutmap.ac.in/api/public/payments/cuedu/status
 CRM_PAYMENT_API_KEY=<crm-payment-api-key>
 
+# Mobile + email OTP verification on the registration form (see Step 6.5)
+OTP_REQUIRED=true
+OTP_TOKEN_SECRET=<generate with: openssl rand -hex 32>
+
+SMS_USERNAME=gramtarang
+SMS_APIKEY=2279de0891389c8d3a33
+SMS_SENDERID=GTIDSM
+SMS_TEMPLATEID=1007161519960183117
+
 LOG_LEVEL=info
 EOF
 ```
 
 > No database is required. Registration and contact data are sent directly to
 > the CRM webhook above. There is no local MySQL dependency.
+
+## Step 6.5 — OTP verification (mobile + email)
+
+The registration form on `admissionportal.html` already has the full OTP UI
+built in (Send OTP / Verify buttons on both the email and phone fields), and
+the backend already implements both channels:
+
+- **Mobile** — `config/sms.js` calls `https://smslogin.co/v3/api.php` with
+  `username`, `apikey`, `senderid`, `templateid`, `mobile`, `message` — the
+  exact same gateway/params as the existing Java integration. The message
+  text (`Dear User,Your OTP for login is:{otp} With Regards,GTIDS IT Team`)
+  already matches the registered DLT template, so it doesn't need to be
+  overridden with `SMS_OTP_TEMPLATE`.
+- **Email** — sent via the same mailer (msmtp, configured in Step 7) already
+  used for confirmation emails; no extra setup needed.
+
+Nothing to code — this is purely the `.env` block above. Once it's in place:
+
+```bash
+pm2 restart cuedu
+```
+
+Verify at boot (`pm2 logs cuedu`):
+- `OTP verification is REQUIRED for registration` — confirms `OTP_REQUIRED` took effect.
+- No `OTP is required but the SMS gateway is not configured` / `...no mail transport is configured` lines — confirms both channels are wired.
+
+Until `OTP_REQUIRED=true` is set, registrations are accepted **without**
+verifying either mobile or email (the send/verify buttons still work, but
+skipping them is not blocked).
 
 ## Step 7 — Configure msmtp for email
 
