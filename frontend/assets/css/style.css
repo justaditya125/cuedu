@@ -260,6 +260,10 @@ input,select,textarea{font-family:inherit}
 .apply-btn:hover{background:linear-gradient(135deg, #f26522 0%, #d94f18 100%)!important;transform:translateY(-2px)!important;box-shadow:0 6px 18px rgba(242, 101, 34, 0.4)!important}
 .pay-btn{background:linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)!important;color:#fff!important;padding:10px 30px!important;border-radius:50px!important;font-weight:700!important;font-size:0.9rem!important;transition:all 0.3s ease!important;border:none!important;box-shadow:0 4px 12px rgba(39, 174, 96, 0.25)!important}
 .pay-btn:hover{background:linear-gradient(135deg, #27ae60 0%, #1e8449 100%)!important;transform:translateY(-2px)!important;box-shadow:0 6px 18px rgba(39, 174, 96, 0.4)!important}
+/* Secondary to apply-btn's primary orange — Login is a lighter-weight action
+   (returning students), not the main conversion CTA. */
+.login-btn{background:transparent!important;color:#0b3c4d!important;padding:9px 26px!important;border-radius:50px!important;font-weight:700!important;font-size:0.9rem!important;transition:all 0.3s ease!important;border:2px solid #0b3c4d!important}
+.login-btn:hover{background:#0b3c4d!important;color:#fff!important;transform:translateY(-2px)!important}
 
 /* === HERO SECTION === */
 .hero{background:linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('../img/campus_hero_background.png') no-repeat center center / cover;min-height:600px;display:flex;align-items:center;padding:60px 40px;position:relative;overflow:hidden}
