@@ -344,6 +344,8 @@ app.post('/api/register',
     // Accept what people actually type - "+91 98765 43210", "09876543210" -
     // and reduce it to the last 10 digits before validating.
     body('phone').customSanitizer(normalizeMobile).matches(/^\d{10}$/).withMessage('Valid 10-digit phone number required'),
+    body('state').trim().isLength({ min: 2, max: 100 }).withMessage('State is required'),
+    body('district').trim().isLength({ min: 2, max: 100 }).withMessage('District is required'),
     body('qualification').trim().isLength({ min: 2, max: 100 }).withMessage('Qualification required'),
     body('course').trim().isLength({ min: 2, max: 100 }).withMessage('Course required')
   ],
@@ -360,7 +362,7 @@ app.post('/api/register',
       });
     }
 
-    const { name, email, phone, qualification, course } = req.body;
+    const { name, email, phone, state, district, qualification, course } = req.body;
 
     // Both channels must carry a valid proof-of-verification token, otherwise
     // the OTP step could simply be skipped by posting to this endpoint directly.
@@ -394,6 +396,11 @@ app.post('/api/register',
         name: name,
         email: email,
         mobile: phone,
+        // The CRM's lead schema calls this "city" - district is the closest
+        // equivalent for an Indian address, so it maps straight across
+        // rather than needing a new field on the CRM side.
+        state: state,
+        city: district,
         course: course,
         source: 'CU EDU Website'
       });
@@ -460,7 +467,7 @@ app.post('/api/register',
         success: true,
         message: crmData.message || 'Registration submitted successfully',
         crm: crmData,
-        submitted: { name, email, phone, qualification, course }
+        submitted: { name, email, phone, state, district, qualification, course }
       });
     } catch (err) {
       logger.error('CRM request error (registration)', { error: err.message });

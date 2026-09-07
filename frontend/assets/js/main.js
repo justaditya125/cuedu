@@ -252,6 +252,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // ---- State / District dependent dropdowns ---------------------------
+  const stateSelect = document.getElementById('state');
+  const districtSelect = document.getElementById('district');
+  if (stateSelect && districtSelect && window.INDIA_STATES) {
+    window.INDIA_STATES.forEach(function(state) {
+      const opt = document.createElement('option');
+      opt.value = state;
+      opt.textContent = state;
+      stateSelect.appendChild(opt);
+    });
+
+    stateSelect.addEventListener('change', function() {
+      // "Other" (and any state with no district list) gets a single "Other"
+      // option rather than an empty, unusable dropdown.
+      const districts = (window.INDIA_STATE_DISTRICTS && window.INDIA_STATE_DISTRICTS[stateSelect.value]) || ['Other'];
+      districtSelect.innerHTML = '';
+      if (!stateSelect.value) {
+        districtSelect.appendChild(new Option('Select State first', ''));
+        districtSelect.disabled = true;
+        return;
+      }
+      districtSelect.disabled = false;
+      districtSelect.appendChild(new Option('Select District', ''));
+      districts.forEach(function(d) { districtSelect.appendChild(new Option(d, d)); });
+    });
+  }
+
   // Registration form: forward directly to CRM, then show response
   const regForm = document.getElementById('registrationForm');
   if (regForm) {
@@ -275,6 +302,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Strip spaces, dashes and a +91 prefix so common formats submit
         // cleanly; the server normalises again as the authority.
         phone: document.getElementById('phone').value.replace(/\D/g, '').slice(-10),
+        state: document.getElementById('state').value,
+        district: document.getElementById('district').value,
         qualification: document.getElementById('qualification').value,
         course: document.getElementById('program').value,
         email_otp_token: otpTokens.email,
