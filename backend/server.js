@@ -65,6 +65,17 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+// How long ago a proof-of-verification token expired (negative = still
+// valid), purely for diagnosing a rejected registration - a large positive
+// number means the applicant sat on a verified form past the TTL, a
+// negative one with a bad signature means the value it was signed for
+// doesn't match what was actually submitted. null = missing/malformed token.
+function tokenAgeSec(token) {
+  const exp = Number(String(token || '').split('.')[0]);
+  if (!exp) return null;
+  return Math.round((Date.now() - exp) / 1000);
+}
+
 // Pushes a completed payment to the CRM. The student is identified by mobile
 // number, email address, or both - at least one is required by the CRM.
 async function postPaymentToCRM({ mobile, email, paymentId, status, amount }) {
@@ -357,8 +368,14 @@ app.post('/api/register',
       const mobileOk = otp.verifyToken('mobile', phone, req.body.phone_otp_token);
       const emailOk = otp.verifyToken('email', email, req.body.email_otp_token);
       if (!mobileOk || !emailOk) {
+        // Never log the tokens themselves - just enough shape to tell "never
+        // sent", "sent but expired/wrong value" and "sent for a different
+        // phone/email than this submission" apart without a repro round-trip.
         logger.warn('Registration rejected: OTP verification missing or invalid', {
-          email, mobileVerified: mobileOk, emailVerified: emailOk
+          email, mobileMasked: phone ? '******' + String(phone).slice(-4) : '(none)',
+          mobileVerified: mobileOk, emailVerified: emailOk,
+          mobileTokenPresent: !!req.body.phone_otp_token, emailTokenPresent: !!req.body.email_otp_token,
+          mobileTokenAgeSec: tokenAgeSec(req.body.phone_otp_token), emailTokenAgeSec: tokenAgeSec(req.body.email_otp_token),
         });
         return res.status(401).json({
           success: false,
