@@ -31,12 +31,22 @@
     .otp-status.err{color:#b91c1c}
     .form-group.verified input[type="email"],
     .form-group.verified input[type="tel"]{border-color:#15803d;background:#f0fdf4}
+    .closed-notice{text-align:center}
+    .closed-notice .closed-icon{font-size:2.6rem;color:#C41E3A;line-height:1;margin-bottom:12px}
+    .closed-notice h3{margin-bottom:14px}
+    .closed-notice p{color:#475569;font-size:.95rem;line-height:1.7;margin-bottom:10px}
+    .closed-notice .closed-lead{font-size:1.02rem;color:#334155;font-weight:600}
+    .closed-contact{background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #C41E3A;
+      border-radius:10px;padding:18px 20px;margin:24px 0 8px;text-align:left}
+    .closed-contact h4{color:#102a43;font-size:.95rem;margin-bottom:10px}
+    .closed-contact p{margin-bottom:6px}
+    .closed-actions{margin-top:22px}
   </style>
 </head>
 <body>
 
 <div class="top-banner">
-  Admissions open for Aug'26 session. Avail a 10% early-bird scholarship!
+  Admissions are now closed. For enquiries, call +91-7846850060 or email admission.online@cutm.ac.in
   <button class="top-banner-close">&times;</button>
 </div>
 
@@ -46,7 +56,6 @@
       <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
         <div class="header-center-text">Centurion University Online</div>
       <div class="header-right-actions">
-        <a href="admissionportal.html" class="apply-btn">Apply Now</a>
         <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
         <button class="hamburger">&#9776;</button>
       </div>
@@ -70,83 +79,27 @@
   <section class="page-header">
     <div class="container">
       <h1>Online Admission Portal</h1>
-      <p>Apply for admission to Centurion University Online degrees</p>
+      <p>Admissions are currently closed</p>
     </div>
   </section>
   <section class="section content-section">
     <div class="container">
       <div class="form-card-wrapper">
-        <div class="form-card-premium">
-          <h3>Registration Form</h3>
-          <p style="font-size: 0.9rem; color: #64748b; margin-top: -20px; margin-bottom: 25px; text-align: center;">Fill out the form below to register for a programme.</p>
-          <form class="enquiry-form" id="registrationForm">
-            <div class="form-group">
-              <label for="name">Full Name</label>
-              <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-            </div>
-            <div class="form-group">
-              <label for="email">Email Address</label>
-              <input type="email" id="email" name="email" placeholder="Enter your email" required>
-              <div class="otp-row" data-channel="email">
-                <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
-                       autocomplete="one-time-code" placeholder="Email code" hidden>
-                <button type="button" class="otp-verify" hidden>Verify</button>
-                <button type="button" class="otp-resend" hidden>Resend</button>
-                <span class="otp-status" role="status" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
-              <div class="otp-row" data-channel="mobile">
-                <input type="text" class="otp-code" inputmode="numeric" maxlength="6"
-                       autocomplete="one-time-code" placeholder="SMS code" hidden>
-                <button type="button" class="otp-verify" hidden>Verify</button>
-                <button type="button" class="otp-resend" hidden>Resend</button>
-                <span class="otp-status" role="status" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="form-group otp-send-all-group">
-              <button type="button" id="otpSendAll" class="otp-send-all">Send OTP to Email &amp; Phone</button>
-              <span class="otp-status" id="otpSendAllStatus" role="status" aria-live="polite"></span>
-            </div>
-            <div class="form-group">
-              <label for="state">State</label>
-              <select id="state" name="state" required>
-                <option value="">Select State</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="district">District</label>
-              <select id="district" name="district" required disabled>
-                <option value="">Select State first</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="qualification">Highest Qualification</label>
-              <select id="qualification" name="qualification" required>
-                <option value="">Select Qualification</option>
-                <option value="12th">12th/ Higher Secondary</option>
-                <option value="bachelors_pursuing">Pursuing Diploma / Bachelor's</option>
-                <option value="diploma">Completed Diploma / Polytechnic</option>
-                <option value="graduate">Graduate (Bachelor's)</option>
-                <option value="postgraduate">Postgraduate (Master's)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="program">Programme Interested In</label>
-              <select id="program" name="course" required>
-                <option value="">Select course</option>
-                <option value="MBA">MBA</option>
-                <option value="MCA">MCA</option>
-                <option value="MSc Mathematics">MSc Mathematics</option>
-                <option value="BBA">BBA</option>
-                <option value="BCA">BCA</option>
-                <option value="BCOM">BCOM</option>
-              </select>
-            </div>
-            <button type="submit" class="btn-submit-premium">Submit Form</button>
-          </form>
+        <div class="form-card-premium closed-notice">
+          <div class="closed-icon" aria-hidden="true">&#9888;</div>
+          <h3>Admissions Are Closed</h3>
+          <p class="closed-lead">We are no longer accepting new registrations for Centurion University Online
+            programmes.</p>
+          <p>If you have already registered, your application is unaffected and our admissions team will continue to
+            assist you.</p>
+          <div class="closed-contact">
+            <h4>For any enquiries</h4>
+            <p><strong>Call:</strong> <a href="tel:+917846850060">+91-7846850060</a></p>
+            <p><strong>Email:</strong> <a href="mailto:admission.online@cutm.ac.in">admission.online@cutm.ac.in</a></p>
+          </div>
+          <div class="closed-actions">
+            <a href="listing.html" class="hero-cta">Explore Programmes</a>
+          </div>
         </div>
       </div>
     </div>

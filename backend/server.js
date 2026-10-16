@@ -221,6 +221,28 @@ function sendConfirmationEmail({ name, email, course, leadId, phone }) {
 // deployed before the SMS gateway is configured without blocking registrations.
 const OTP_REQUIRED = process.env.OTP_REQUIRED === 'true';
 
+// Admissions are closed unless explicitly reopened, so closure holds even if
+// the environment is rebuilt or the variable is forgotten. Reopening is a
+// deliberate ADMISSIONS_OPEN=true. Only intake is affected: contact enquiries,
+// payment lookup and payment confirmation stay available to existing students.
+const ADMISSIONS_OPEN = process.env.ADMISSIONS_OPEN === 'true';
+
+const ADMISSIONS_CLOSED_MESSAGE =
+  'Admissions are now closed and we are not accepting new registrations. ' +
+  'For any enquiries, please call +91-7846850060 or email admission.online@cutm.ac.in.';
+
+// Guards the intake endpoints. Returns true when the request was rejected.
+function rejectIfAdmissionsClosed(req, res) {
+  if (ADMISSIONS_OPEN) return false;
+  logger.info('Rejected intake request - admissions closed', { path: req.path });
+  res.status(403).json({
+    success: false,
+    admissionsClosed: true,
+    message: ADMISSIONS_CLOSED_MESSAGE
+  });
+  return true;
+}
+
 // Partially masks a destination for logs - enough to correlate, not enough to
 // leak a full contact detail into log files.
 function maskDestination(channel, value) {
@@ -242,6 +264,10 @@ function validOtpTarget(channel, value) {
 }
 
 app.post('/api/otp/send', async (req, res) => {
+  // OTP exists only to serve registration. Gating it while admissions are
+  // closed also stops anyone running up SMS charges against a dead form.
+  if (rejectIfAdmissionsClosed(req, res)) return;
+
   const channel = String(req.body && req.body.channel || '').toLowerCase();
   if (channel !== 'mobile' && channel !== 'email') {
     return res.status(400).json({ success: false, message: 'Channel must be "mobile" or "email".' });
@@ -335,6 +361,9 @@ app.post('/api/otp/verify', (req, res) => {
 });
 
 app.post('/api/register',
+  // Checked before validation so a closed intake answers the same way to every
+  // request, rather than leaking which fields a valid submission would need.
+  (req, res, next) => { if (!rejectIfAdmissionsClosed(req, res)) next(); },
   [
     body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
     // Lower-cased and trimmed only. normalizeEmail() would strip dots and
@@ -804,8 +833,15 @@ app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
+  if (ADMISSIONS_OPEN) {
+    logger.info('Admissions are OPEN - /api/register and /api/otp/send are accepting requests');
+  } else {
+    logger.warn('Admissions are CLOSED - /api/register and /api/otp/send will reject with 403. ' +
+                'Set ADMISSIONS_OPEN=true to reopen.');
+  }
+
   // Make OTP misconfiguration loud at boot rather than at the first applicant.
-  if (OTP_REQUIRED) {
+  if (ADMISSIONS_OPEN && OTP_REQUIRED) {
     logger.info('OTP verification is REQUIRED for registration');
     const missing = sms.missingConfig();
     if (missing.length) {
@@ -817,7 +853,7 @@ app.listen(PORT, () => {
     if (otp.TOKEN_SECRET_IS_EPHEMERAL) {
       logger.warn('OTP_TOKEN_SECRET is not set - verification tokens are invalidated on every restart');
     }
-  } else {
+  } else if (ADMISSIONS_OPEN) {
     logger.warn('OTP_REQUIRED is not "true" - registrations are accepted without mobile/email verification');
   }
 });
