@@ -37,11 +37,25 @@ echo "mode: $MODE"
 CNF=$(mktemp); chmod 600 "$CNF"
 OUT=$(mktemp)
 trap 'rm -f "$CNF" "$OUT"' EXIT
-read -r -s -p "MySQL root password: " ROOTPW; echo
-printf '[client]\nuser=root\npassword=%s\n' "$ROOTPW" > "$CNF"
+if [ -n "${MYSQL_ADMIN_CNF:-}" ]; then
+  # Opt-in: use an existing MySQL client config file instead of typing a password,
+  # e.g. Ubuntu's maintenance account:  MYSQL_ADMIN_CNF=/etc/mysql/debian.cnf
+  [ -r "$MYSQL_ADMIN_CNF" ] || die "cannot read $MYSQL_ADMIN_CNF"
+  cp "$MYSQL_ADMIN_CNF" "$CNF"
+  echo "using MySQL credentials from $MYSQL_ADMIN_CNF"
+else
+  read -r -s -p "MySQL root password: " ROOTPW; echo
+  printf '[client]\nuser=root\npassword=%s\n' "$ROOTPW" > "$CNF"
+  unset ROOTPW
+fi
 [ -n "${MYSQL_HOST:-}" ] && printf 'host=%s\nport=%s\n' "$MYSQL_HOST" "${MYSQL_PORT:-3306}" >> "$CNF"
-unset ROOTPW
-mysql --defaults-extra-file="$CNF" -e "SELECT 1" >/dev/null 2>&1 || die "MySQL root login failed - nothing was changed"
+if ! mysql --defaults-extra-file="$CNF" -e "SELECT 1" >/dev/null 2>&1; then
+  echo "ERROR: MySQL login failed - nothing was changed." >&2
+  echo "  - Retry and type the root password carefully (nothing is echoed as you type), or" >&2
+  echo "  - use Ubuntu's maintenance account:  MYSQL_ADMIN_CNF=/etc/mysql/debian.cnf bash $0" >&2
+  echo "  - or have a MySQL admin run the SQL in DEPLOY-UBUNTU.md Step 6.6." >&2
+  exit 1
+fi
 
 if [ "$MODE" = setup ]; then
 APPPW="$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | cut -c1-28)"
