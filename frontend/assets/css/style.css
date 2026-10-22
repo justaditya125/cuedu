@@ -1591,3 +1591,49 @@ body.results-open{overflow:hidden}
   .results-toolbar{padding:10px 50px 10px 14px}
   .results-toolbar strong{flex:1 1 100%}
 }
+
+/* === HEADER: NO OVERLAPS AT ANY WIDTH ===
+   The title is centred with position:absolute, which ignores how wide the
+   buttons are, and the logo hangs down over the nav bar. Both collided on
+   narrow desktops (measured at 780-1080px) once View My Results was added. */
+
+/* Below this the title can no longer sit in the exact page centre: let it
+   share the row with the logo and buttons and shrink to fit. */
+@media (max-width: 1140px) {
+  .header-center-text {
+    position: static;
+    transform: none;
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    padding: 0 14px;
+    font-size: clamp(0.85rem, 1.9vw, 1.3rem);
+    letter-spacing: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Tablets: no room for the title next to Results + Login + menu. */
+@media (max-width: 900px) {
+  .header-center-text { display: none; }
+}
+
+/* Narrow desktop: tighten the menu and keep it clear of the hanging logo. */
+@media (min-width: 992px) and (max-width: 1180px) {
+  .nav > li { margin: 0 10px; }
+  .nav > li > a { font-size: 0.88rem; }
+  .header-nav-row .header-inner { padding-left: 150px; padding-right: 24px; }
+}
+
+/* Footer: five columns need ~800px of room; between 770 and 1000px they made
+   the page scroll sideways. Three columns until the existing 768px breakpoint. */
+@media (max-width: 1000px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}

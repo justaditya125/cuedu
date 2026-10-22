@@ -1,7 +1,12 @@
+const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
+// The same emblem logo as the site header. Its proportions are read from the PNG
+// header so the layout never depends on a hard-coded size.
 const LOGO = path.join(__dirname, '..', 'assets', 'memo-logo.png');
+const LOGO_PNG = fs.readFileSync(LOGO);
+const LOGO_RATIO = LOGO_PNG.readUInt32BE(16) / LOGO_PNG.readUInt32BE(20);   // width / height
 
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
@@ -61,10 +66,10 @@ function heading(doc, y, text, size, opts) {
 
 function drawHeader(doc, memo) {
   // Logo, centred, in the place of the template's "University Logo" box.
-  const logoW = 165;
-  const logoH = (logoW * 232) / 640;
-  doc.image(LOGO, (PAGE_W - logoW) / 2, MARGIN - 6, { width: logoW });
-  let y = MARGIN - 6 + logoH + 14;
+  const logoH = 80;
+  const logoW = logoH * LOGO_RATIO;
+  doc.image(LOGO, (PAGE_W - logoW) / 2, MARGIN - 8, { height: logoH });
+  let y = MARGIN - 8 + logoH + 12;
 
   y = heading(doc, y, memo.title, 12.5) + 12;
 
