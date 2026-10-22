@@ -179,7 +179,7 @@ RESULTS_DB_NAME=cuedu_results
 
 ```bash
 pm2 restart cuedu-backend --update-env
-grep -a "Results database" backend/logs/combined.log | tail -2
+grep -a "Results database" "$(ls -t backend/logs/combined*.log | head -1)" | tail -2
 ```
 
 Expect `Results database reachable` with the student count. If it says `NOT
@@ -205,7 +205,7 @@ real visitors, not your proxies, by checking that the logged `ip` is a public
 address:
 
 ```bash
-grep -a "Results memo served" backend/logs/combined.log | tail -2
+grep -a "Results memo served" "$(ls -t backend/logs/combined*.log | head -1)" | tail -2
 ```
 
 If it shows `127.0.0.1` or `192.168.x.x`, every visitor is sharing one limit.
@@ -332,6 +332,10 @@ Expected:
 - Pages → `HTTP/1.1 200`
 
 ---
+
+> **Logs:** Winston rotates at 5 MB and numbers the *newest* file highest, so
+> `backend/logs/combined.log` is the oldest. For current entries use
+> `ls -t backend/logs/combined*.log | head -1`, or `pm2 logs cuedu-backend`.
 
 ## Common troubleshooting
 
