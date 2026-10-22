@@ -11,13 +11,33 @@ const logger = require('./config/logger');
 const mailer = require('./config/mailer');
 const otp = require('./config/otp');
 const sms = require('./config/sms');
+const results = require('./config/results');
+const memoPdf = require('./config/memoPdf');
+const { createLimiter } = require('./config/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://cuedu.cutm.ac.in').split(',');
 
-app.use(helmet());
+// The app sits behind two nginx hops (the TLS edge, then this server's own
+// nginx), so without this req.ip is always a private address and every visitor
+// would share one rate-limit bucket. Trusting only loopback and private ranges
+// makes Express take the right-most address that is NOT one of ours - the real
+// client as recorded by the edge - so a client-supplied X-Forwarded-For cannot
+// be used to dodge the limiter.
+app.set('trust proxy', 'loopback, uniquelocal');
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      // The results popup shows the marks memo PDF in a frame, from a blob: URL
+      // created in the page. Nothing else may be framed.
+      'frame-src': ["'self'", 'blob:']
+    }
+  }
+}));
 app.use(compression());
 
 app.use(cors({
@@ -804,6 +824,78 @@ app.get('/api/payment/lookup', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Results: a registration number returns that student's marks memo as a PDF.
+//
+// Anyone who knows a registration number can fetch that student's marks, and
+// the numbers follow a pattern, so two per-IP limits slow down guessing: a
+// generous one on all lookups and a strict one on lookups that find nothing -
+// a student mistypes a few times, a scraper misses almost every time. Neither
+// stops a determined attacker; only a second factor would.
+// ---------------------------------------------------------------------------
+const resultsAll = createLimiter({
+  windowMs: Number(process.env.RESULTS_RATE_WINDOW_MS) || 10 * 60 * 1000,
+  max: Number(process.env.RESULTS_RATE_MAX) || 60
+});
+const resultsMisses = createLimiter({
+  windowMs: Number(process.env.RESULTS_RATE_WINDOW_MS) || 10 * 60 * 1000,
+  max: Number(process.env.RESULTS_RATE_MAX_MISSES) || 10
+});
+
+app.post('/api/results/memo', async (req, res) => {
+  const ip = req.ip || 'unknown';
+
+  const gate = [resultsAll.check(ip), resultsMisses.check(ip)].find((g) => g.blocked);
+  if (gate) {
+    logger.warn('Results lookup throttled', { ip });
+    res.set('Retry-After', String(gate.retryAfterSec));
+    return res.status(429).json({
+      success: false,
+      retryAfter: gate.retryAfterSec,
+      message: 'Too many attempts. Please wait a few minutes and try again.'
+    });
+  }
+  resultsAll.record(ip);
+
+  const regn = results.normalizeRegn(req.body && req.body.regn);
+  if (!regn) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid registration number.' });
+  }
+
+  try {
+    const memos = await results.lookup(regn);
+    if (!memos.length) {
+      resultsMisses.record(ip);
+      logger.info('Results lookup: no match', { regn: results.maskRegn(regn), ip });
+      return res.status(404).json({
+        success: false,
+        message: 'No result found for that registration number. Please check the number and try again.'
+      });
+    }
+
+    const pdf = await memoPdf.buildMemoPdf(memos);
+    logger.info('Results memo served', { regn: results.maskRegn(regn), memos: memos.length, ip });
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': String(pdf.length),
+      'Content-Disposition': 'inline; filename="Result_' + regn + '.pdf"',
+      // Student data: never let a browser or proxy keep a copy.
+      'Cache-Control': 'no-store'
+    });
+    res.send(pdf);
+  } catch (err) {
+    // Not configured, unreachable, wrong credentials or tables missing: the
+    // service is down rather than broken, so say 503 and let people retry.
+    if (err instanceof results.ResultsUnavailableError) {
+      logger.error('Results database is not available', { reason: err.message });
+      return res.status(503).json({ success: false, message: 'Results are not available right now. Please try again later.' });
+    }
+    logger.error('Results lookup failed', { error: err.message, regn: results.maskRegn(regn) });
+    res.status(500).json({ success: false, message: 'Could not prepare the result right now. Please try again later.' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
@@ -832,6 +924,14 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  if (!results.isConfigured()) {
+    logger.warn('RESULTS_DB_NAME / RESULTS_DB_USER are not set - "View My Results" will answer 503');
+  } else {
+    results.ping()
+      .then((n) => logger.info('Results database reachable', { students: n }))
+      .catch((err) => logger.error('Results database is NOT reachable - "View My Results" will answer 503', { reason: err.message }));
+  }
 
   if (ADMISSIONS_OPEN) {
     logger.info('Admissions are OPEN - /api/register and /api/otp/send are accepting requests');

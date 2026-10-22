@@ -15,6 +15,8 @@
     "express-validator": "^7.0.0",
     "helmet": "^7.0.0",
     "nodemailer": "^9.0.3",
-    "winston": "^3.10.0"
+    "winston": "^3.10.0",
+    "pdfkit": "^0.20.2",
+    "mysql2": "^3.24.6"
   }
 }

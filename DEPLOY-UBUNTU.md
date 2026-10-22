@@ -117,6 +117,99 @@ Until `OTP_REQUIRED=true` is set, registrations are accepted **without**
 verifying either mobile or email (the send/verify buttons still work, but
 skipping them is not blocked).
 
+## Step 6.6 — Exam results ("View My Results")
+
+Students enter a registration number and get their marks memo as a PDF. The marks
+are stored in **MySQL**, loaded from the result spreadsheets. They are student
+data, so the spreadsheets, the intermediate database and the generated `.sql`
+file are all gitignored and never committed.
+
+`npm install` adds `mysql2` and `pdfkit` (both pure JavaScript - nothing to compile).
+
+**1. Build the load file** - on your own machine, where the spreadsheets are. Needs
+`pip install openpyxl`:
+
+```bash
+scripts/build-results.sh "EXAM DATA University Format"
+# -> exam-data/results-mysql.sql
+```
+
+Every cell is copied exactly as the sheet has it - no grades are derived, no
+re-attempts merged, no SGPA recomputed. The importer stops with an error rather
+than guessing if a sheet has an unexpected layout.
+
+**2. One-time MySQL setup** - on the server. The app gets a **read-only** account,
+so a bug or a stolen password cannot change or delete marks. Replace the password:
+
+```bash
+mysql <<'SQL'
+CREATE DATABASE IF NOT EXISTS cuedu_results CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'cuedu_results'@'localhost'  IDENTIFIED BY 'CHOOSE-A-STRONG-PASSWORD';
+CREATE USER IF NOT EXISTS 'cuedu_results'@'127.0.0.1'  IDENTIFIED BY 'CHOOSE-A-STRONG-PASSWORD';
+GRANT SELECT ON cuedu_results.* TO 'cuedu_results'@'localhost';
+GRANT SELECT ON cuedu_results.* TO 'cuedu_results'@'127.0.0.1';
+SQL
+```
+
+(On Ubuntu, `mysql` run as root connects without a password. If your server asks
+for one, add `-u root -p`.)
+
+**3. Load the data** - copy the file up, load it, then delete the copy:
+
+```bash
+scp exam-data/results-mysql.sql root@SERVER:/root/results-mysql.sql
+# on the server
+mysql cuedu_results < /root/results-mysql.sql
+shred -u /root/results-mysql.sql
+```
+
+The load builds complete new tables and swaps them in with one atomic `RENAME
+TABLE`, so a student looking up a result mid-load sees the whole old release or
+the whole new one, never a mix. It prints the row counts when it finishes.
+
+**4. Point the app at it** - add to `.env`, then restart:
+
+```bash
+RESULTS_DB_HOST=127.0.0.1
+RESULTS_DB_PORT=3306
+RESULTS_DB_USER=cuedu_results
+RESULTS_DB_PASSWORD=<the password from step 2>
+RESULTS_DB_NAME=cuedu_results
+```
+
+```bash
+pm2 restart cuedu-backend --update-env
+grep -a "Results database" backend/logs/combined.log | tail -2
+```
+
+Expect `Results database reachable` with the student count. If it says `NOT
+reachable`, the `reason` field tells you why (`ER_ACCESS_DENIED_ERROR` = wrong
+password, `ECONNREFUSED` = MySQL not listening, `ER_NO_SUCH_TABLE` = step 3 not
+done). Until it is fixed the page answers 503 "Results are not available right
+now", and nothing else on the site is affected.
+
+**5. Check it** - the first should print a PDF header, the second a 404 message:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/results/memo -H 'Content-Type: application/json' \
+  -d '{"regn":"<a real registration number>"}' | head -c 5
+curl -s -X POST http://127.0.0.1:8000/api/results/memo -H 'Content-Type: application/json' \
+  -d '{"regn":"000000000000"}'
+```
+
+**Releasing new results later** - rebuild, copy, load (steps 1 and 3). No restart
+and no `.env` change: the app reads MySQL on every lookup.
+
+Lookups are limited per client IP (see `.env.example`). Confirm the limiter sees
+real visitors, not your proxies, by checking that the logged `ip` is a public
+address:
+
+```bash
+grep -a "Results memo served" backend/logs/combined.log | tail -2
+```
+
+If it shows `127.0.0.1` or `192.168.x.x`, every visitor is sharing one limit.
+
 ## Step 7 — Configure msmtp for email
 
 The app sends a confirmation email to the student (with their registration ID)

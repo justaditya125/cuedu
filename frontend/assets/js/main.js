@@ -416,4 +416,204 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // ---- View My Results ------------------------------------------------------
+  // Any element with [data-open-results] opens a popup that asks for a
+  // registration number and shows that student's marks memo (a PDF generated
+  // by the server). A "#view-results" link opens it directly.
+  (function() {
+    const ENDPOINT = '/api/results/memo';
+
+    let modal = null;        // the .results-modal element
+    let overlay = null;
+    let opener = null;       // element to return focus to on close
+    let pdfUrl = '';         // object URL of the current memo
+
+    function el(html) {
+      const t = document.createElement('div');
+      t.innerHTML = html.trim();
+      return t.firstChild;
+    }
+
+    function build() {
+      overlay = el(
+        '<div class="results-overlay" hidden>' +
+          '<div class="results-modal" role="dialog" aria-modal="true" aria-labelledby="resultsTitle">' +
+            '<button type="button" class="results-close" aria-label="Close">&times;</button>' +
+            '<div class="results-entry">' +
+              '<h2 id="resultsTitle">View My Results</h2>' +
+              '<p class="results-sub">Enter your registration number to view and download your marks memo.</p>' +
+              '<form class="results-form" novalidate>' +
+                '<label for="resultsRegn">Registration / Enrollment Number</label>' +
+                '<input id="resultsRegn" type="text" inputmode="numeric" autocomplete="off" ' +
+                       'autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="e.g. 255102840010">' +
+                '<button type="submit" class="results-submit">View Result</button>' +
+                '<div class="results-status" role="status" aria-live="polite"></div>' +
+              '</form>' +
+              '<p class="results-hint">Your result opens as a PDF you can download and print.</p>' +
+            '</div>' +
+            '<div class="results-view">' +
+              '<div class="results-toolbar">' +
+                '<strong>Marks Memo</strong>' +
+                '<a class="primary results-download" download>Download PDF</a>' +
+                '<a class="results-newtab" target="_blank" rel="noopener">Open in new tab</a>' +
+                '<button type="button" class="results-another">Check another</button>' +
+              '</div>' +
+              '<iframe class="results-frame" title="Marks memo" hidden></iframe>' +
+              '<div class="results-card" hidden>' +
+                '<div class="tick" aria-hidden="true">&#10003;</div>' +
+                '<h3>Your result is ready</h3>' +
+                '<p>Open it to view your marks memo, or download the PDF to keep a copy.</p>' +
+                '<a class="results-card-open" target="_blank" rel="noopener">View Result</a>' +
+                '<a class="secondary results-card-download" download>Download PDF</a>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+      modal = overlay.querySelector('.results-modal');
+      document.body.appendChild(overlay);
+
+      // Close on the X, on Escape, or on a click on the dimmed backdrop.
+      overlay.querySelector('.results-close').addEventListener('click', close);
+      overlay.addEventListener('mousedown', function(e) { if (e.target === overlay) close(); });
+      overlay.addEventListener('keydown', onKeydown);
+      overlay.querySelector('.results-another').addEventListener('click', showForm);
+      overlay.querySelector('.results-form').addEventListener('submit', onSubmit);
+    }
+
+    function focusables() {
+      return Array.prototype.filter.call(
+        modal.querySelectorAll('a[href], button, input, iframe'),
+        function(n) { return !n.disabled && n.offsetParent !== null; }
+      );
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const list = focusables();
+      if (!list.length) return;
+      const first = list[0], last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+
+    function setStatus(text, kind) {
+      const s = overlay.querySelector('.results-status');
+      s.textContent = text || '';
+      s.className = 'results-status' + (kind ? ' ' + kind : '');
+    }
+
+    function releasePdf() {
+      if (pdfUrl) { URL.revokeObjectURL(pdfUrl); pdfUrl = ''; }
+      const frame = overlay.querySelector('.results-frame');
+      frame.removeAttribute('src');
+      frame.hidden = true;
+      overlay.querySelector('.results-card').hidden = true;
+    }
+
+    function showForm() {
+      releasePdf();
+      modal.classList.remove('is-viewing', 'is-card');
+      setStatus('', '');
+      const input = overlay.querySelector('#resultsRegn');
+      input.value = '';
+      input.focus();
+    }
+
+    function open(from) {
+      if (!overlay) build();
+      opener = from || document.activeElement;
+      overlay.hidden = false;
+      document.body.classList.add('results-open');
+      showForm();
+    }
+
+    function close() {
+      if (!overlay || overlay.hidden) return;
+      releasePdf();
+      overlay.querySelector('#resultsRegn').value = '';   // do not leave a number behind on a shared computer
+      overlay.hidden = true;
+      document.body.classList.remove('results-open');
+      modal.classList.remove('is-viewing', 'is-card');
+      if (location.hash === '#view-results') history.replaceState(null, '', location.pathname + location.search);
+      if (opener && typeof opener.focus === 'function') opener.focus();
+    }
+
+    // Phones and tablets cannot reliably show a PDF inside a frame (iOS Safari
+    // shows page one only), so they get a card with explicit buttons instead.
+    function canShowInline() {
+      if (navigator.pdfViewerEnabled === false) return false;
+      const touchOnly = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      return !(touchOnly && window.innerWidth < 1024);
+    }
+
+    function showPdf(blob, regn) {
+      releasePdf();
+      pdfUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const filename = 'Result_' + regn + '.pdf';
+
+      overlay.querySelectorAll('.results-download, .results-card-download').forEach(function(a) {
+        a.href = pdfUrl;
+        a.setAttribute('download', filename);
+      });
+      overlay.querySelectorAll('.results-newtab, .results-card-open').forEach(function(a) { a.href = pdfUrl; });
+
+      modal.classList.add('is-viewing');
+      const inline = canShowInline();
+      modal.classList.toggle('is-card', !inline);
+      if (inline) {
+        const frame = overlay.querySelector('.results-frame');
+        frame.src = pdfUrl + '#view=FitH&navpanes=0';
+        frame.hidden = false;
+      } else {
+        overlay.querySelector('.results-card').hidden = false;
+        overlay.querySelector('.results-card-open').focus();
+      }
+    }
+
+    function onSubmit(e) {
+      e.preventDefault();
+      const input = overlay.querySelector('#resultsRegn');
+      const submit = overlay.querySelector('.results-submit');
+      const regn = input.value.replace(/\s+/g, '').toUpperCase();
+
+      if (!regn) { setStatus('Please enter your registration number.', 'err'); input.focus(); return; }
+
+      submit.disabled = true;
+      setStatus('Fetching your result...', '');
+
+      fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regn: regn })
+      })
+        .then(function(res) {
+          const type = res.headers.get('content-type') || '';
+          if (res.ok && type.indexOf('application/pdf') !== -1) {
+            return res.blob().then(function(blob) { setStatus('', ''); showPdf(blob, regn); });
+          }
+          return res.json().catch(function() { return {}; }).then(function(data) {
+            setStatus(data.message || 'Could not fetch your result. Please try again.', 'err');
+          });
+        })
+        .catch(function() {
+          setStatus('Network error. Please check your connection and try again.', 'err');
+        })
+        .then(function() { submit.disabled = false; });
+    }
+
+    document.addEventListener('click', function(e) {
+      const trigger = e.target.closest && e.target.closest('[data-open-results]');
+      if (!trigger) return;
+      e.preventDefault();
+      open(trigger);
+    });
+
+    if (location.hash === '#view-results') open(null);
+    window.addEventListener('hashchange', function() {
+      if (location.hash === '#view-results') open(null);
+    });
+  })();
 });

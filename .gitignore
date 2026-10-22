@@ -10,3 +10,11 @@ logs/
 *.swp
 *.swo
 *~
+
+# Student exam data - names, enrollment numbers and marks. Never commit.
+EXAM DATA University Format/
+exam-data/
+*.xlsx
+*.xls
+*.db
+*.db-journal
