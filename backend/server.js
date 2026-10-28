@@ -249,7 +249,7 @@ const ADMISSIONS_OPEN = process.env.ADMISSIONS_OPEN === 'true';
 
 const ADMISSIONS_CLOSED_MESSAGE =
   'Admissions are now closed and we are not accepting new registrations. ' +
-  'For any enquiries, please call +91-7846850060 or email admission.online@cutm.ac.in.';
+  'For any enquiries, please call +91 76828 03962 or email admission.online@cutm.ac.in.';
 
 // Guards the intake endpoints. Returns true when the request was rejected.
 function rejectIfAdmissionsClosed(req, res) {
@@ -350,7 +350,7 @@ app.post('/api/otp/send', async (req, res) => {
     logger.error('OTP send failed', { channel, to: maskDestination(channel, value), error: err.message });
     res.status(502).json({
       success: false,
-      message: 'Could not send the verification code right now. Please try again, or contact admissions on +91-7846850060.'
+      message: 'Could not send the verification code right now. Please try again, or contact admissions on +91 76828 03962.'
     });
   }
 });
@@ -497,7 +497,7 @@ app.post('/api/register',
           success: false,
           message: crmData.message
             ? `Registration was not completed: ${crmData.message}`
-            : 'Your registration could not be completed. Please contact admissions on +91-7846850060.',
+            : 'Your registration could not be completed. Please contact admissions on +91 76828 03962.',
           crm: crmData
         });
       }
@@ -634,8 +634,8 @@ app.post('/api/confirm-payment',
         return res.status(502).json({
           success: false,
           message: crmReason
-            ? `Your payment was received, but the CRM could not be updated: ${crmReason} Please contact admissions on +91-7846850060 with your Payment ID.`
-            : 'Your payment was received, but the CRM could not be updated. Please contact admissions on +91-7846850060 with your Payment ID.',
+            ? `Your payment was received, but the CRM could not be updated: ${crmReason} Please contact admissions on +91 76828 03962 with your Payment ID.`
+            : 'Your payment was received, but the CRM could not be updated. Please contact admissions on +91 76828 03962 with your Payment ID.',
           payment_id: payment_id,
           crm: crmData
         });
@@ -767,7 +767,7 @@ app.all('/api/razorpay-webhook', async (req, res) => {
 
 const NOT_FOUND_MESSAGE = 'No registered details found for those details. ' +
   'Please check your mobile number or email address, or register first. ' +
-  'If you have already registered, contact admissions on +91-7846850060.';
+  'If you have already registered, contact admissions on +91 76828 03962.';
 
 app.get('/api/payment/lookup', async (req, res) => {
   const mobile = normalizeMobile(req.query.mobile);

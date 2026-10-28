@@ -1637,3 +1637,6 @@ body.results-open{overflow:hidden}
 @media (max-width: 480px) {
   .footer-grid { grid-template-columns: 1fr; }
 }
+
+/* Phone numbers contain spaces now ("+91 76828 03962"); never let one wrap mid-number. */
+.nowrap, a[href^="tel:"] { white-space: nowrap; }
