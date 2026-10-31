@@ -1673,3 +1673,6 @@ body.results-open{overflow:hidden}
 .vm-section h3 { margin-top: 24px; }
 .vm-promise { background: #f9fbff; border-left: 5px solid #C41E3A; border-radius: 12px; padding: 24px 28px; margin-top: 10px; }
 .vm-promise .tagline { font-size: 1.3rem; font-weight: 800; color: #102a43; margin-bottom: 10px; }
+
+/* Phones: a parent that is also a real link (Recognition) opens its submenu on the first tap. */
+.nav li.sub-open .dropdown-content { display: block; }

@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // A menu whose parent is a real link (Recognition) has a submenu too. On a phone there is no
+  // hover, so the first tap opens the submenu and the second follows the link.
+  document.querySelectorAll('.nav > li').forEach(function(li) {
+    const parent = li.querySelector(':scope > a');
+    const submenu = li.querySelector(':scope > .dropdown-content');
+    if (!parent || !submenu || parent.getAttribute('href') === '#') return;
+    parent.addEventListener('click', function(e) {
+      const touch = window.matchMedia('(max-width: 991px)').matches || window.matchMedia('(pointer: coarse)').matches;
+      if (touch && !li.classList.contains('sub-open')) {
+        e.preventDefault();
+        li.classList.add('sub-open');
+      }
+    });
+  });
+
   // Tab switching
   const tabBtns = document.querySelectorAll('.tab-btn');
   tabBtns.forEach(function(btn) {
