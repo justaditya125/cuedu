@@ -1640,3 +1640,36 @@ body.results-open{overflow:hidden}
 
 /* Phone numbers contain spaces now ("+91 76828 03962"); never let one wrap mid-number. */
 .nowrap, a[href^="tel:"] { white-space: nowrap; }
+
+/* === DOCUMENT PAGES (NAAC certificate, degree equivalence, disclosures) === */
+.footer-col a.sub { padding-left: 30px; font-size: 0.85rem; }
+.footer-col a.sub::before { left: 14px; }
+
+.doc-intro { max-width: 760px; margin: 0 auto 22px; text-align: center; }
+.doc-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 22px; }
+.doc-btn { display: inline-block; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 0.95rem;
+  background: #fff; color: #0b3c4d !important; border: 2px solid #0b3c4d; text-decoration: none; }
+.doc-btn:hover { background: #0b3c4d; color: #fff !important; }
+.doc-btn.primary { background: #0b3c4d; color: #fff !important; }
+.doc-btn.primary:hover { background: #14536b; border-color: #14536b; }
+.doc-frame { display: block; width: 100%; max-width: 980px; height: 80vh; min-height: 520px; margin: 0 auto;
+  border: 1px solid #cbd5e1; border-radius: 10px; background: #525659; }
+.doc-note { text-align: center; font-size: 0.85rem; color: #64748b; margin-top: 12px; }
+/* Phones cannot scroll a PDF inside a frame (iOS shows page one only): use the buttons instead. */
+@media (pointer: coarse) and (max-width: 1023px) { .doc-frame { display: none; } }
+
+.doc-heading { margin-top: 38px; }
+.content-section ul.doc-list { list-style: none; padding: 0; margin: 18px 0 0; }
+.content-section ul.doc-list li { padding: 0; margin: 0 0 12px; font-size: 1rem; }
+.content-section ul.doc-list li::before { content: none; }
+.doc-list a { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1px solid #e2e8f0;
+  border-left: 4px solid #C41E3A; border-radius: 10px; background: #fff; color: #102a43; font-weight: 600; text-decoration: none; }
+.doc-list a:hover { background: #f9fbff; border-left-color: #D4A547; transform: translateX(3px); }
+.doc-icon { flex: 0 0 auto; background: #C41E3A; color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; }
+
+/* Vision and Mission */
+.vm-section { margin-bottom: 34px; }
+.vm-section h2 { margin-bottom: 14px; }
+.vm-section h3 { margin-top: 24px; }
+.vm-promise { background: #f9fbff; border-left: 5px solid #C41E3A; border-radius: 12px; padding: 24px 28px; margin-top: 10px; }
+.vm-promise .tagline { font-size: 1.3rem; font-weight: 800; color: #102a43; margin-bottom: 10px; }
