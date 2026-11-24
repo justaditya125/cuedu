@@ -22,20 +22,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // A menu whose parent is a real link (Recognition) has a submenu too. On a phone there is no
-  // hover, so the first tap opens the submenu and the second follows the link.
+  // Menu parents with a submenu. On a phone/tablet there is no hover: a "#" parent just toggles its
+  // submenu; a parent that is a real link (Recognition) opens the submenu on the first tap and
+  // follows the link on the second.
   document.querySelectorAll('.nav > li').forEach(function(li) {
     const parent = li.querySelector(':scope > a');
     const submenu = li.querySelector(':scope > .dropdown-content');
-    if (!parent || !submenu || parent.getAttribute('href') === '#') return;
+    if (!parent || !submenu) return;
+    const isHash = parent.getAttribute('href') === '#';
     parent.addEventListener('click', function(e) {
-      const touch = window.matchMedia('(max-width: 991px)').matches || window.matchMedia('(pointer: coarse)').matches;
-      if (touch && !li.classList.contains('sub-open')) {
+      const touch = window.matchMedia('(max-width: 1270px)').matches || window.matchMedia('(pointer: coarse)').matches;
+      if (!touch) { if (isHash) e.preventDefault(); return; }
+      if (isHash) {
+        e.preventDefault();
+        li.classList.toggle('sub-open');
+      } else if (!li.classList.contains('sub-open')) {
         e.preventDefault();
         li.classList.add('sub-open');
       }
     });
   });
+
+  // Homepage: programme finder + carousel
+  const track = document.getElementById('prog-track');
+  if (track) {
+    const cards = Array.prototype.slice.call(track.querySelectorAll('.prog-card'));
+    const empty = document.getElementById('prog-empty');
+    const sel = { level: document.getElementById('f-level'), field: document.getElementById('f-field'), dur: document.getElementById('f-dur') };
+    function applyFilter() {
+      let shown = 0;
+      cards.forEach(function(c) {
+        const ok = (!sel.level.value || c.dataset.level === sel.level.value) &&
+                   (!sel.field.value || c.dataset.field === sel.field.value) &&
+                   (!sel.dur.value || c.dataset.dur === sel.dur.value);
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      empty.style.display = shown ? 'none' : 'block';
+      track.scrollLeft = 0;
+    }
+    const finder = document.getElementById('finder');
+    if (finder) finder.addEventListener('submit', function(e) {
+      e.preventDefault();
+      applyFilter();
+      document.getElementById('programmes').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('prog-reset').addEventListener('click', function() {
+      sel.level.value = sel.field.value = sel.dur.value = '';
+      applyFilter();
+    });
+    function step(dir) { track.scrollBy({ left: dir * (cards[0].offsetWidth + 20) * 2, behavior: 'smooth' }); }
+    document.getElementById('prog-prev').addEventListener('click', function() { step(-1); });
+    document.getElementById('prog-next').addEventListener('click', function() { step(1); });
+  }
 
   // Tab switching
   const tabBtns = document.querySelectorAll('.tab-btn');

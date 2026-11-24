@@ -16,13 +16,13 @@
   <style>
     .payment-page{min-height:60vh;padding:60px 20px}
     .payment-card{max-width:640px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);padding:40px;text-align:center}
-    .payment-card h2{color:#1A3A5C;margin:0 0 8px;font-size:1.8rem}
+    .payment-card h2{color:#0a2350;margin:0 0 8px;font-size:1.8rem}
     .payment-card p.subtitle{color:#64748b;font-size:0.98rem;margin-bottom:25px}
     .lookup-form{display:flex;flex-direction:column;gap:14px;max-width:420px;margin:0 auto 10px}
     .lookup-form input{padding:13px 16px;border:1px solid #d3d3d3;border-radius:8px;font-size:0.98rem;color:#333;background-color:#f9f9f9;transition:border-color 0.2s, background-color 0.2s;box-sizing:border-box}
-    .lookup-form input:focus{border-color:#102a43;background-color:#fff;box-shadow:0 0 0 3px rgba(16,42,67,0.1);outline:none}
-    .lookup-form .btn-retrieve{background:linear-gradient(135deg, #1A3A5C 0%, #2c5d8a 100%);color:#fff;padding:13px 30px;border:none;border-radius:50px;font-weight:700;font-size:1rem;box-shadow:0 4px 14px rgba(16,42,67,0.25);transition:all 0.3s ease;cursor:pointer}
-    .lookup-form .btn-retrieve:hover{background:linear-gradient(135deg, #2c5d8a 0%, #1A3A5C 100%);transform:translateY(-2px)}
+    .lookup-form input:focus{border-color:#0a2350;background-color:#fff;box-shadow:0 0 0 3px rgba(16,42,67,0.1);outline:none}
+    .lookup-form .btn-retrieve{background:linear-gradient(135deg, #0a2350 0%, #2c5d8a 100%);color:#fff;padding:13px 30px;border:none;border-radius:50px;font-weight:700;font-size:1rem;box-shadow:0 4px 14px rgba(16,42,67,0.25);transition:all 0.3s ease;cursor:pointer}
+    .lookup-form .btn-retrieve:hover{background:linear-gradient(135deg, #2c5d8a 0%, #0a2350 100%);transform:translateY(-2px)}
     .lookup-form .btn-retrieve:disabled{opacity:0.6;cursor:not-allowed;transform:none}
     .divider{display:flex;align-items:center;gap:12px;color:#94a3b8;font-size:0.85rem;max-width:420px;margin:8px auto}
     .divider::before,.divider::after{content:"";flex:1;height:1px;background:#e2e8f0}
@@ -36,19 +36,19 @@
     .lookup-msg.success .confirm-details .value{color:#166534;font-weight:700}
     .lookup-msg.success .confirm-note{font-size:0.92rem;font-weight:400;color:#166534}
     .student-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:left;margin:20px auto 0;max-width:480px}
-    .student-card h3{color:#1A3A5C;font-size:1.05rem;margin:0 0 12px;border-bottom:2px solid #D4A547;padding-bottom:8px}
+    .student-card h3{color:#0a2350;font-size:1.05rem;margin:0 0 12px;border-bottom:2px solid #ef5a1a;padding-bottom:8px}
     .detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef2f7;font-size:0.95rem}
     .detail-row:last-child{border-bottom:none}
     .detail-row .label{color:#64748b;font-weight:600}
-    .detail-row .value{color:#1A3A5C;font-weight:700;text-align:right;word-break:break-word}
+    .detail-row .value{color:#0a2350;font-weight:700;text-align:right;word-break:break-word}
     .amount-box{margin:20px auto 0;max-width:480px}
     .amount-box .amount-label{font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:#64748b}
-    .amount-box .amount-value{font-size:2rem;font-weight:800;color:#1A3A5C}
+    .amount-box .amount-value{font-size:2rem;font-weight:800;color:#0a2350}
     .pay-actions{margin-top:22px}
     .pay-actions .btn-pay{display:inline-block;background:linear-gradient(135deg, #f26522 0%, #d94f18 100%);color:#fff;padding:14px 40px;border-radius:50px;font-weight:700;font-size:1.05rem;box-shadow:0 6px 18px rgba(242,101,34,0.35);transition:all 0.3s ease;cursor:pointer;border:none}
     .pay-actions .btn-pay:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(242,101,34,0.45)}
     .pay-note{font-size:0.82rem;color:#94a3b8;margin-top:10px}
-    .back-link{display:inline-block;margin-top:18px;color:#C41E3A;font-size:0.9rem}
+    .back-link{display:inline-block;margin-top:18px;color:#1a56c4;font-size:0.9rem}
     .hidden{display:none !important}
   </style>
 </head>
@@ -60,28 +60,21 @@
 </div>
 
 <header class="header">
-  <div class="header-top-row">
-    <div class="header-inner">
-      <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
-      <div class="header-center-text">Centurion University Online</div>
-      <div class="header-right-actions">
-        <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
-        <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
-        <button class="hamburger">&#9776;</button>
-      </div>
-    </div>
-  </div>
-  <div class="header-nav-row">
-    <div class="header-inner">
-      <ul class="nav">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
-        <li><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
-        <li><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
-        <li><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
-        <li><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
-        <li><a href="contact-us.html">Contact Us</a></li>
-      </ul>
+  <div class="header-inner">
+    <a href="index.html" class="brand"><img src="assets/img/logo-emblem.png" alt="Centurion University emblem" class="logo"><span class="brand-text"><strong>Centurion University</strong><small>Online</small></span></a>
+    <ul class="nav">
+      <li><a href="index.html">Home</a></li>
+      <li class="has-sub"><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
+      <li class="has-sub"><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
+      <li class="has-sub"><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank" rel="noopener">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
+      <li class="has-sub"><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
+      <li class="has-sub"><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
+      <li><a href="contact-us.html">Contact Us</a></li>
+    </ul>
+    <div class="header-right-actions">
+      <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
+      <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
+      <button class="hamburger" aria-label="Menu">&#9776;</button>
     </div>
   </div>
 </header>

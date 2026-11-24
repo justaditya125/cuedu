@@ -15,10 +15,10 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
     .error-page{text-align:center;padding:100px 20px;min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .error-page h1{font-size:120px;color:#C41E3A;margin:0;line-height:1}
+    .error-page h1{font-size:120px;color:#1a56c4;margin:0;line-height:1}
     .error-page h2{font-size:28px;color:#333;margin:20px 0 10px}
     .error-page p{color:#666;margin-bottom:30px;max-width:500px}
-    .error-page a{display:inline-block;background:#D4A547;color:#fff;padding:12px 30px;border-radius:50px;font-weight:700}
+    .error-page a{display:inline-block;background:#ef5a1a;color:#fff;padding:12px 30px;border-radius:50px;font-weight:700}
     .error-page a:hover{background:#C4962F}
   </style>
 </head>
@@ -30,28 +30,21 @@
 </div>
 
 <header class="header">
-  <div class="header-top-row">
-    <div class="header-inner">
-      <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
-        <div class="header-center-text">Centurion University Online</div>
-      <div class="header-right-actions">
-        <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
-        <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
-        <button class="hamburger">&#9776;</button>
-      </div>
-    </div>
-  </div>
-  <div class="header-nav-row">
-    <div class="header-inner">
-      <ul class="nav">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
-        <li><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
-        <li><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
-        <li><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
-        <li><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
-        <li><a href="contact-us.html">Contact Us</a></li>
-      </ul>
+  <div class="header-inner">
+    <a href="index.html" class="brand"><img src="assets/img/logo-emblem.png" alt="Centurion University emblem" class="logo"><span class="brand-text"><strong>Centurion University</strong><small>Online</small></span></a>
+    <ul class="nav">
+      <li><a href="index.html">Home</a></li>
+      <li class="has-sub"><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
+      <li class="has-sub"><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
+      <li class="has-sub"><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank" rel="noopener">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
+      <li class="has-sub"><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
+      <li class="has-sub"><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
+      <li><a href="contact-us.html">Contact Us</a></li>
+    </ul>
+    <div class="header-right-actions">
+      <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
+      <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
+      <button class="hamburger" aria-label="Menu">&#9776;</button>
     </div>
   </div>
 </header>

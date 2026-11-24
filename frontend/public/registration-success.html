@@ -17,18 +17,18 @@
     .success-page{min-height:60vh;padding:60px 20px;display:flex;align-items:center;justify-content:center}
     .success-card{max-width:680px;width:100%;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);padding:40px;text-align:center}
     .success-icon{width:80px;height:80px;border-radius:50%;background:#e8f8ef;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:40px;color:#2ecc71}
-    .success-card h2{color:#1A3A5C;margin:0 0 8px;font-size:1.8rem}
+    .success-card h2{color:#0a2350;margin:0 0 8px;font-size:1.8rem}
     .success-message{color:#555;font-size:1.05rem;margin-bottom:30px;line-height:1.6}
-    .reg-id-card{background:linear-gradient(135deg,#1A3A5C,#2c5d8a);color:#fff;border-radius:12px;padding:24px;margin-bottom:30px}
+    .reg-id-card{background:linear-gradient(135deg,#0a2350,#2c5d8a);color:#fff;border-radius:12px;padding:24px;margin-bottom:30px}
     .reg-id-card .reg-id-label{font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;color:#cfe3f5;margin-bottom:6px}
     .reg-id-card .reg-id-value{font-size:2.2rem;font-weight:800;letter-spacing:2px;color:#fff}
     .reg-id-card .reg-id-note{font-size:0.85rem;color:#d9e9f8;margin-top:8px}
     .details-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;text-align:left;margin-bottom:30px}
-    .details-box h3{color:#1A3A5C;font-size:1.1rem;margin:0 0 15px;border-bottom:2px solid #D4A547;padding-bottom:8px}
+    .details-box h3{color:#0a2350;font-size:1.1rem;margin:0 0 15px;border-bottom:2px solid #ef5a1a;padding-bottom:8px}
     .detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef2f7;font-size:0.95rem}
     .detail-row:last-child{border-bottom:none}
     .detail-row .label{color:#64748b;font-weight:600}
-    .detail-row .value{color:#1A3A5C;font-weight:700;text-align:right;word-break:break-word}
+    .detail-row .value{color:#0a2350;font-weight:700;text-align:right;word-break:break-word}
     .success-card a.hero-cta{display:inline-block}
     .error-note{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:20px;font-size:0.95rem}
   </style>
@@ -41,28 +41,21 @@
 </div>
 
 <header class="header">
-  <div class="header-top-row">
-    <div class="header-inner">
-      <a href="index.html"><img src="assets/img/logo.png" alt="Centurion University" class="logo"></a>
-      <div class="header-center-text">Centurion University Online</div>
-      <div class="header-right-actions">
-        <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
-        <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
-        <button class="hamburger">&#9776;</button>
-      </div>
-    </div>
-  </div>
-  <div class="header-nav-row">
-    <div class="header-inner">
-      <ul class="nav">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
-        <li><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
-        <li><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
-        <li><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
-        <li><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
-        <li><a href="contact-us.html">Contact Us</a></li>
-      </ul>
+  <div class="header-inner">
+    <a href="index.html" class="brand"><img src="assets/img/logo-emblem.png" alt="Centurion University emblem" class="logo"><span class="brand-text"><strong>Centurion University</strong><small>Online</small></span></a>
+    <ul class="nav">
+      <li><a href="index.html">Home</a></li>
+      <li class="has-sub"><a href="#">About Us</a><div class="dropdown-content"><a href="about-us.html">About Centurion</a><a href="https://cutm.ac.in" target="_blank" rel="noopener">Centurion University (cutm.ac.in)</a><a href="vision-mission.html">Vision and Mission</a></div></li>
+      <li class="has-sub"><a href="#">Programmes</a><div class="dropdown-content"><a href="programme-detail/centurion-university/mba.html">MBA</a><a href="programme-detail/centurion-university/mca.html">MCA</a><a href="programme-detail/centurion-university/msc.html">MSc Mathematics</a><a href="programme-detail/centurion-university/bba.html">BBA</a><a href="programme-detail/centurion-university/bca.html">BCA</a><a href="programme-detail/centurion-university/bcom.html">BCOM</a></div></li>
+      <li class="has-sub"><a href="#">Student Corner</a><div class="dropdown-content"><a href="https://eclasses.cuedu.in/users/login" target="_blank" rel="noopener">Learning Management System</a><a href="online-conduction.html">Course Conduction</a><a href="assessment.html">Assessment</a><a href="assets/pdf/Examination-Policy-for-Online-Programmes.pdf" target="_blank" rel="noopener">Examination Guidelines</a><a href="mandatory-disclosure.html">Mandatory Disclosure</a><a href="myaccount.html">Myaccount</a></div></li>
+      <li class="has-sub"><a href="#">Admission</a><div class="dropdown-content"><a href="admission-policy.html">Admission Policy</a><a href="registration-process.html">Registration Process</a><a href="admissionportal.html">Online Admission Portal</a></div></li>
+      <li class="has-sub"><a href="recognition.html">Recognition</a><div class="dropdown-content"><a href="naac-certification.html">NAAC Certification</a><a href="online-degree-equivalence.html">Online Degree Equivalence</a></div></li>
+      <li><a href="contact-us.html">Contact Us</a></li>
+    </ul>
+    <div class="header-right-actions">
+      <button type="button" class="results-btn" data-open-results><span class="rb-full">View My </span>Results</button>
+      <a href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener" class="login-btn">Login</a>
+      <button class="hamburger" aria-label="Menu">&#9776;</button>
     </div>
   </div>
 </header>
