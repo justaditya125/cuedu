@@ -1510,3 +1510,8 @@ footer{background:linear-gradient(180deg,#0a2350 0%,#071a40 100%)}
 .login-choice span{display:block;font-size:0.82rem;color:var(--muted);margin-top:2px}
 .login-choice:hover,.login-choice:focus-visible{border-color:var(--orange);background:#fff7f2;transform:translateY(-1px);box-shadow:0 8px 18px rgba(217,79,24,0.12)}
 @media (max-width: 660px) { .lb-full{display:none} }
+
+/* Domain-change notice (shown after cuedu.in redirects to cutmonline.in) */
+.domain-notice{position:relative;z-index:1002;display:flex;align-items:center;justify-content:center;gap:14px;background:#fff4e5;color:#7a3a05;border-bottom:2px solid var(--orange);padding:11px 48px 11px 20px;font-size:0.92rem;line-height:1.5;text-align:center}
+.domain-notice b{color:var(--navy)}
+.domain-notice button{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.4rem;line-height:1;color:#7a3a05;padding:4px 8px}

@@ -120,6 +120,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   })();
 
+
+  // Domain-change notice: cuedu.in redirects to cutmonline.in with ?from=cuedu.in. Tell the visitor why
+  // the address changed, once per browser session, then tidy the URL.
+  (function() {
+    let from = '';
+    try { from = new URLSearchParams(location.search).get('from') || ''; } catch (e) {}
+    if (from !== 'cuedu.in' && from !== 'www.cuedu.in') return;
+    try {
+      const p = new URLSearchParams(location.search); p.delete('from');
+      const q = p.toString();
+      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+    } catch (e) {}
+    const bar = document.createElement('div');
+    bar.className = 'domain-notice';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML =
+      '<span><strong>Our website address has changed.</strong> Centurion University Online has moved from ' +
+      '<b>cuedu.in</b> to <b>cutmonline.in</b>. You have been redirected automatically &ndash; please update your bookmarks.</span>' +
+      '<button type="button" aria-label="Dismiss">&times;</button>';
+    bar.querySelector('button').addEventListener('click', function() { bar.remove(); });
+    document.body.insertBefore(bar, document.body.firstChild);
+  })();
+
   // Tab switching
   const tabBtns = document.querySelectorAll('.tab-btn');
   tabBtns.forEach(function(btn) {
