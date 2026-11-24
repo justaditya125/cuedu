@@ -18,7 +18,7 @@ const { createLimiter } = require('./config/rateLimit');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://cuedu.cutm.ac.in').split(',');
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://cutmonline.in').split(',');
 
 // The app sits behind two nginx hops (the TLS edge, then this server's own
 // nginx), so without this req.ip is always a private address and every visitor
@@ -39,6 +39,31 @@ app.use(helmet({
   }
 }));
 app.use(compression());
+
+// The site moved from cuedu.in / cuedu.cutm.ac.in to cutmonline.in. Visitors on an
+// old hostname get a short "we have moved" page that forwards them to the same page on
+// the new domain; search engines and link previews get a permanent redirect. /api/ and
+// /assets/ are left alone so payment or CRM callbacks still pointed at the old name
+// keep working, and the moved page can load its own files.
+const CANONICAL_ORIGIN = (process.env.CANONICAL_ORIGIN || 'https://cutmonline.in').replace(/\/$/, '');
+const OLD_HOSTS = new Set((process.env.OLD_HOSTS || 'cuedu.in,www.cuedu.in,cuedu.cutm.ac.in')
+  .split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+const CRAWLER_RE = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegram|preview|embedly/i;
+const MOVED_PAGE = path.join(__dirname, '../frontend/moved/moved.html');
+
+app.use((req, res, next) => {
+  if (!OLD_HOSTS.has((req.hostname || '').toLowerCase())) return next();
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  if (req.path.startsWith('/api/') || req.path.startsWith('/assets/')) return next();
+  const target = CANONICAL_ORIGIN + req.originalUrl;
+  const ua = req.get('user-agent') || '';
+  const isCrawler = CRAWLER_RE.test(ua) && !/uptimerobot/i.test(ua);
+  if (isCrawler || req.path === '/robots.txt' || req.path === '/sitemap.xml') {
+    return res.redirect(301, target);
+  }
+  res.set('Cache-Control', 'no-store');
+  return res.status(200).sendFile(MOVED_PAGE);
+});
 
 app.use(cors({
   origin: ALLOWED_ORIGINS,
