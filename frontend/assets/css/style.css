@@ -54,7 +54,9 @@ input,select,textarea{font-family:inherit}
 .header-inner{display:flex;align-items:center;gap:14px;max-width:1280px;margin:0 auto;padding:0 32px;min-height:var(--header-h)}
 .brand{display:flex;align-items:center;gap:10px;flex:0 0 auto;text-decoration:none}
 .logo{display:block;height:82px;width:auto}
-.brand-tag{font-size:0.66rem;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--blue);border:1.5px solid var(--blue);border-radius:6px;padding:3px 8px;line-height:1.2}
+.brand-tag{display:flex;flex-direction:column;gap:3px;max-width:160px;line-height:1.2}
+.brand-tag b{font-size:0.72rem;font-weight:700;color:var(--navy);letter-spacing:0}
+.brand-tag i{font-style:normal;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;color:var(--orange)}
 
 .nav{display:flex;align-items:center;gap:0;margin:0 auto;padding:0}
 .nav>li{position:relative}
@@ -92,12 +94,14 @@ input,select,textarea{font-family:inherit}
   .nav>li.has-sub:hover>a::after{transform:rotate(45deg) translateY(-2px)}
 }
 @media (max-width: 440px) {
-  .brand-tag{display:none}
   .header-inner .logo{height:54px}
   .brand{gap:6px}
   .header-right-actions{gap:5px}
   .results-btn,.login-btn{padding:6px 9px!important;font-size:0.72rem!important}
   .hamburger{padding:4px 8px;font-size:1.3rem}
+}
+@media (max-width: 640px) {
+  .brand-tag{display:none}
 }
 @media (max-width: 560px) {
   .header-inner{padding:0 14px;gap:8px}
