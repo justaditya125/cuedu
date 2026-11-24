@@ -249,6 +249,7 @@ const ADMISSIONS_OPEN = process.env.ADMISSIONS_OPEN === 'true';
 
 const ADMISSIONS_CLOSED_MESSAGE =
   'Admissions are now closed and we are not accepting new registrations. ' +
+  "Admissions for the Feb '27 session open soon. " +
   'For any enquiries, please call +91 76828 03962 or email admission.online@cutm.ac.in.';
 
 // Guards the intake endpoints. Returns true when the request was rejected.

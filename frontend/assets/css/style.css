@@ -1497,3 +1497,4 @@ footer{background:linear-gradient(180deg,#0a2350 0%,#071a40 100%)}
   .results-btn,.login-btn{padding:5px 7px!important}
   .hamburger{padding:3px 6px}
 }
+.hero-card .soon{display:inline-block;background:#fff4ec;color:var(--orange-d);border:1px solid #ffd9c2;border-radius:999px;padding:5px 12px;font-size:0.84rem;font-weight:700;margin:0 0 12px;line-height:1.4}
