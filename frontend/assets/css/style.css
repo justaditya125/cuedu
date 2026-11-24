@@ -1,7 +1,7 @@
 /* === CENTURION UNIVERSITY DESIGN SYSTEM v1.0 === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-:root{--navy:#0a2350;--navy-2:#123a7a;--blue:#1a56c4;--blue-d:#0d3b8c;--orange:#ef5a1a;--orange-l:#ff8a4c;--orange-d:#c2410c;--ink:#1b2a41;--muted:#5b6b82;--line:#e3e9f3;--bg:#f4f7fc;--shadow:0 14px 34px rgba(10,35,80,0.14);--header-h:96px}
+:root{--navy:#0a2350;--navy-2:#123a7a;--blue:#1a56c4;--blue-d:#0d3b8c;--orange:#ef5a1a;--orange-l:#ff8a4c;--orange-d:#c2410c;--ink:#1b2a41;--muted:#5b6b82;--line:#e3e9f3;--bg:#f4f7fc;--shadow:0 14px 34px rgba(10,35,80,0.14);--header-h:108px}
 *{margin:0;padding:0;box-sizing:border-box}
 .hidden{display:none !important}
 body{font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;background:#fff;color:#1b2a41;font-size:16px;line-height:1.6;letter-spacing:0}
@@ -51,16 +51,16 @@ input,select,textarea{font-family:inherit}
 
 /* === HEADER: one row - logo | menu | actions === */
 .header{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 16px rgba(10,35,80,0.07)}
-.header-inner{display:flex;align-items:center;gap:14px;max-width:1280px;margin:0 auto;padding:0 32px;min-height:var(--header-h)}
+.header-inner{display:flex;align-items:center;gap:14px;max-width:1280px;margin:0 auto;padding:0 24px;min-height:var(--header-h)}
 .brand{display:flex;align-items:center;gap:10px;flex:0 0 auto;text-decoration:none}
-.logo{display:block;height:82px;width:auto}
-.brand-tag{display:flex;flex-direction:column;gap:3px;max-width:160px;line-height:1.2}
-.brand-tag b{font-size:0.72rem;font-weight:700;color:var(--navy);letter-spacing:0}
-.brand-tag i{font-style:normal;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;color:var(--orange)}
+.logo{display:block;height:94px;width:auto}
+.brand-tag{display:flex;flex-direction:column;gap:4px;max-width:200px;line-height:1.2}
+.brand-tag b{font-size:0.97rem;font-weight:700;color:var(--navy);letter-spacing:0}
+.brand-tag i{font-style:normal;font-size:0.95rem;font-weight:800;letter-spacing:0.1em;color:var(--orange)}
 
 .nav{display:flex;align-items:center;gap:0;margin:0 auto;padding:0}
 .nav>li{position:relative}
-.nav>li>a{display:flex;align-items:center;gap:5px;padding:37px 9px;color:var(--ink);font-weight:600;font-size:0.88rem;white-space:nowrap;transition:color 0.2s}
+.nav>li>a{display:flex;align-items:center;gap:5px;padding:43px 7px;color:var(--ink);font-weight:600;font-size:0.88rem;white-space:nowrap;transition:color 0.2s}
 .nav>li:hover>a,.nav>li:focus-within>a{color:var(--blue)}
 .nav>li>a:focus-visible{outline:2px solid var(--blue);outline-offset:-4px;border-radius:6px}
 .nav>li.has-sub>a::after{content:'';width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:0.65;transition:transform 0.2s}
@@ -71,7 +71,7 @@ input,select,textarea{font-family:inherit}
 .nav li:hover>.dropdown-content,.nav li:focus-within>.dropdown-content{display:block}
 
 .header-right-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-.login-btn{display:inline-block;background:#fff;color:var(--ink)!important;padding:8px 18px;border-radius:8px;font-weight:700;font-size:0.9rem;border:1.5px solid var(--orange);transition:all 0.2s;line-height:1.4;white-space:nowrap}
+.login-btn{display:inline-block;font:inherit;font-weight:700;cursor:pointer;background:#fff;color:var(--ink)!important;padding:8px 18px;border-radius:8px;font-weight:700;font-size:0.9rem;border:1.5px solid var(--orange);transition:all 0.2s;line-height:1.4;white-space:nowrap}
 .login-btn:hover{background:var(--orange);color:#fff!important}
 .apply-btn{display:inline-block;background:linear-gradient(135deg,#ef5a1a 0%,#d94f18 100%);color:#fff!important;padding:9px 20px;border-radius:8px;font-weight:700;font-size:0.9rem;border:none;box-shadow:0 6px 16px rgba(217,79,24,0.28);transition:all 0.2s}
 .apply-btn:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(217,79,24,0.38)}
@@ -81,9 +81,9 @@ input,select,textarea{font-family:inherit}
 .hamburger:hover{background:var(--bg)}
 
 /* === MENU ON TABLETS AND PHONES === */
-@media (max-width: 1270px) {
-  .header-inner{gap:12px;padding:0 20px;min-height:80px}
-  .logo{height:68px}
+@media (max-width: 1360px) {
+  .header-inner{gap:12px;padding:0 20px;min-height:90px}
+  .logo{height:78px}
   .hamburger{display:block;order:3}
   .header-right-actions{margin-left:auto}
   .nav{display:none;position:absolute;top:100%;left:0;right:0;margin:0;flex-direction:column;align-items:stretch;background:#fff;padding:6px 20px 18px;border-bottom:3px solid var(--orange);box-shadow:0 18px 30px rgba(10,35,80,0.14);max-height:calc(100vh - 110px);overflow-y:auto}
@@ -94,7 +94,7 @@ input,select,textarea{font-family:inherit}
   .nav>li.has-sub:hover>a::after{transform:rotate(45deg) translateY(-2px)}
 }
 @media (max-width: 440px) {
-  .header-inner .logo{height:54px}
+  .header-inner .logo{height:56px}
   .brand{gap:6px}
   .header-right-actions{gap:5px}
   .results-btn,.login-btn{padding:6px 9px!important;font-size:0.72rem!important}
@@ -107,12 +107,12 @@ input,select,textarea{font-family:inherit}
   .brand .logo{order:1}
   .header-right-actions{order:2}
   .brand-tag{order:3;flex:1 1 100%;max-width:none;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:6px 0 8px;margin-top:2px;border-top:1px solid var(--line)}
-  .brand-tag b{font-size:0.7rem}
-  .brand-tag i{font-size:0.68rem}
+  .brand-tag b{font-size:0.84rem}
+  .brand-tag i{font-size:0.8rem}
 }
 @media (max-width: 560px) {
   .header-inner{padding:0 14px;gap:8px}
-  .logo{height:60px}
+  .logo{height:64px}
   .results-btn,.login-btn{padding:7px 12px!important;font-size:0.76rem!important}
   .top-banner{padding:9px 38px;font-size:0.78rem}
 }
@@ -1493,8 +1493,20 @@ footer{background:linear-gradient(180deg,#0a2350 0%,#071a40 100%)}
 }
 @media (max-width: 340px) {
   .header-inner{padding:0 10px;gap:5px}
-  .header-inner .logo{height:48px}
+  .header-inner .logo{height:50px}
   .results-btn,.login-btn{padding:5px 7px!important}
   .hamburger{padding:3px 6px}
 }
 .hero-card .soon{display:inline-block;background:#fff4ec;color:var(--orange-d);border:1px solid #ffd9c2;border-radius:999px;padding:5px 12px;font-size:0.84rem;font-weight:700;margin:0 0 12px;line-height:1.4}
+
+/* University Login popup */
+.login-modal{max-width:420px;text-align:center}
+.login-modal h3{color:var(--navy);font-size:1.35rem;margin-bottom:6px}
+.login-modal p{color:var(--muted);font-size:0.92rem;margin-bottom:18px}
+.login-close{position:absolute;top:10px;right:12px;width:36px;height:36px;border:none;background:none;font-size:1.7rem;line-height:1;color:var(--muted);border-radius:50%}
+.login-close:hover{background:var(--bg);color:var(--navy)}
+.login-choice{display:block;text-align:left;border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px;color:var(--ink);transition:all 0.2s}
+.login-choice strong{display:block;font-size:1rem;color:var(--navy)}
+.login-choice span{display:block;font-size:0.82rem;color:var(--muted);margin-top:2px}
+.login-choice:hover,.login-choice:focus-visible{border-color:var(--orange);background:#fff7f2;transform:translateY(-1px);box-shadow:0 8px 18px rgba(217,79,24,0.12)}
+@media (max-width: 660px) { .lb-full{display:none} }

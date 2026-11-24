@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!parent || !submenu) return;
     const isHash = parent.getAttribute('href') === '#';
     parent.addEventListener('click', function(e) {
-      const touch = window.matchMedia('(max-width: 1270px)').matches || window.matchMedia('(pointer: coarse)').matches;
+      const touch = window.matchMedia('(max-width: 1360px)').matches || window.matchMedia('(pointer: coarse)').matches;
       if (!touch) { if (isHash) e.preventDefault(); return; }
       if (isHash) {
         e.preventDefault();
@@ -75,6 +75,50 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('prog-prev').addEventListener('click', function() { step(-1); });
     document.getElementById('prog-next').addEventListener('click', function() { step(1); });
   }
+
+
+  // University Login popup: choose Admission Manager or Student sign-in.
+  (function() {
+    const triggers = document.querySelectorAll('[data-open-login]');
+    if (!triggers.length) return;
+    let overlay = null, lastFocus = null;
+    function build() {
+      overlay = document.createElement('div');
+      overlay.className = 'results-overlay login-overlay';
+      overlay.hidden = true;
+      overlay.innerHTML =
+        '<div class="results-modal login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">' +
+          '<button type="button" class="login-close" aria-label="Close">&times;</button>' +
+          '<h3 id="login-title">University Login</h3>' +
+          '<p>Choose how you would like to sign in.</p>' +
+          '<a class="login-choice" href="https://crm.cutm.ac.in" target="_blank" rel="noopener"><strong>Admission Manager Login</strong><span>For admission managers and counsellors</span></a>' +
+          '<a class="login-choice" href="https://crm.cutm.ac.in/student-login" target="_blank" rel="noopener"><strong>Student Login</strong><span>For registered students</span></a>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay || e.target.closest('.login-close')) close();
+      });
+    }
+    function open(trigger) {
+      if (!overlay) build();
+      lastFocus = trigger || document.activeElement;
+      overlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      overlay.querySelector('.login-choice').focus();
+    }
+    function close() {
+      if (!overlay || overlay.hidden) return;
+      overlay.hidden = true;
+      document.body.style.overflow = '';
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    triggers.forEach(function(b) {
+      b.addEventListener('click', function(e) { e.preventDefault(); open(b); });
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') close();
+    });
+  })();
 
   // Tab switching
   const tabBtns = document.querySelectorAll('.tab-btn');
