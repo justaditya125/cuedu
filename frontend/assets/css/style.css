@@ -101,7 +101,14 @@ input,select,textarea{font-family:inherit}
   .hamburger{padding:4px 8px;font-size:1.3rem}
 }
 @media (max-width: 640px) {
-  .brand-tag{display:none}
+  /* No room beside the logo: the university name gets its own line under the logo/buttons row. */
+  .header-inner{flex-wrap:wrap;row-gap:0}
+  .brand{display:contents}
+  .brand .logo{order:1}
+  .header-right-actions{order:2}
+  .brand-tag{order:3;flex:1 1 100%;max-width:none;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:6px 0 8px;margin-top:2px;border-top:1px solid var(--line)}
+  .brand-tag b{font-size:0.7rem}
+  .brand-tag i{font-size:0.68rem}
 }
 @media (max-width: 560px) {
   .header-inner{padding:0 14px;gap:8px}
